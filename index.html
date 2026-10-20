@@ -947,6 +947,7 @@
     var w = String(n || '').replace(/\s+/g, ' ').trim().split(' ');
     if (w.length < 2) return w[0] || '';
     var last = w[w.length - 1].replace(/[^A-Za-z0-9\u00C0-\u024F]/g, '');
+    if (last.length === 1) return w.slice(0, -1).join(' ') + ' ' + last.toUpperCase(); // already "Juan Carlos R"
     return w[0] + (last ? ' ' + last.charAt(0).toUpperCase() : '');
   }
   function leaderPanel(title, sub, list, fmt, foot, minTxn) {
