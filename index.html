@@ -1253,7 +1253,7 @@
   }
   // Photo card: the photo fills the left side, top to bottom (15 x 12 tiles), with the
   // words on the right. Party cards get confetti above and below the words.
-  function photoCard(key, lines, party) {
+  function photoCard(key, lines, party, leafy) {
     var BW = 15, BH = ROWS, r = [];
     for (var i = 0; i < ROWS; i++) r.push(blank());
     for (var y = 0; y < BH; y++) for (var x = 0; x < BW; x++) r[y][x] = '\u0001' + key + '|' + x + '|' + y + '|' + BW + '|' + BH;
@@ -1266,6 +1266,14 @@
       var top = confetti(0), bot = confetti(5);
       for (var c = tc; c < COLS; c++) { r[0][c] = top[c]; r[ROWS - 1][c] = bot[c]; }
     }
+    // Birthdays: a frame of cannabis leaves around the words (mixed with confetti on the day itself)
+    if (leafy) {
+      for (var c2 = BW; c2 < COLS; c2++) {
+        var lf = !party || (c2 % 2 === 0);
+        if (lf) { r[0][c2] = '🌿'; r[ROWS - 1][c2] = '🌿'; }
+      }
+      for (var y2 = 1; y2 < ROWS - 1; y2++) { r[y2][BW] = y2 % 2 ? '🌿' : ' '; r[y2][COLS - 1] = y2 % 2 ? ' ' : '🌿'; }
+    }
     return r;
   }
   function photoCelebrate(ev, cycle, upcoming) {
@@ -1277,7 +1285,7 @@
       if (!e.key || !P[e.key]) return null;
       return photoCard(e.key, e.kind === 'bday'
         ? ['HAPPY', 'BIRTHDAY', '', e.name + '!']
-        : ['HAPPY', e.years + (e.years === 1 ? ' YEAR' : ' YEARS'), 'AT TTA', '', e.name + '!'], true);
+        : ['HAPPY', e.years + (e.years === 1 ? ' YEAR' : ' YEARS'), 'AT TTA', '', e.name + '!'], true, e.kind === 'bday');
     }
     var up = ev.filter(function (x) { return x.key && P[x.key] && x.days > 0; });
     if (!upcoming || !up.length) return null;
@@ -1285,7 +1293,7 @@
     var when = e.days === 1 ? 'TOMORROW' : shortMD(e.date);
     return photoCard(e.key, e.kind === 'bday'
       ? [e.days <= 21 ? 'COMING UP' : 'USQ TEAM', '', e.name, '', 'BIRTHDAY', when]
-      : [e.days <= 21 ? 'COMING UP' : 'USQ TEAM', '', e.name, '', e.years + (e.years === 1 ? ' YEAR' : ' YEARS'), 'AT TTA', when], false);
+      : [e.days <= 21 ? 'COMING UP' : 'USQ TEAM', '', e.name, '', e.years + (e.years === 1 ? ' YEAR' : ' YEARS'), 'AT TTA', when], false, e.kind === 'bday');
   }
   /* ---------- fun pages: records, Green Wednesday, pet of the month, weather ---------- */
   var WX = null;
