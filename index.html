@@ -2196,6 +2196,21 @@
           return '<tr><td>' + esc(shortDate(k)) + '</td><td class="r">' + money(d.netSales || 0) + '</td><td class="r">' + (d.orders || 0) + '</td><td class="r">' + Object.keys(d.budtenders || {}).length + '</td>' +
             '<td class="r"><button class="a-btn small danger" type="button" data-del="days/' + esc(k) + '" data-what="' + esc(shortDate(k)) + '">Delete</button></td></tr>';
         }).join('') + '</tbody></table>' : '<p class="a-empty">Nothing uploaded yet.</p>';
+
+      // Whole uploads, grouped by file, so a wrong report can be removed in one go
+      var groups = {};
+      dk.forEach(function (k) {
+        var d = days()[k], g = (d.file || 'Unknown file') + '|' + (d.uploadedAt || 0);
+        (groups[g] = groups[g] || { file: d.file || 'Unknown file', at: d.uploadedAt || 0, days: [] }).days.push(k);
+      });
+      var gl = Object.keys(groups).map(function (g) { return groups[g]; }).sort(function (a, b) { return b.at - a.at; }).slice(0, 8);
+      $('dayList').innerHTML = (gl.length ? '<p class="a-hint" style="margin-top:0"><b>Uploads</b> (deleting one removes its days and the attributions for those days)</p>' + gl.map(function (g) {
+        g.days.sort();
+        return '<div class="a-item"><div class="grow"><div class="name">' + esc(g.file) + '</div><div class="sub">' +
+          esc(shortDate(g.days[0])) + (g.days.length > 1 ? ' to ' + esc(shortDate(g.days[g.days.length - 1])) : '') + ' (' + g.days.length + (g.days.length === 1 ? ' day' : ' days') + ')' +
+          (g.at ? ', saved ' + esc(new Date(g.at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })) : '') + '</div></div>' +
+          '<button class="a-btn small danger" type="button" data-delupload="' + esc(g.days.join(',')) + '" data-what="' + esc(g.file) + '">Delete upload</button></div>';
+      }).join('') + '<div style="height:12px"></div>' : '') + $('dayList').innerHTML;
     }
 
     // Star buttons and deletes
@@ -2213,6 +2228,13 @@
           cur.count = Math.max(0, (Number(cur.count) || 0) + delta);
           return cur;
         }).catch(function (err) { toast(failText(err), true); });
+      } else if (b.dataset.delupload) {
+        var dl = b.dataset.delupload.split(',');
+        if (!confirm('Delete the whole upload "' + b.dataset.what + '"? That removes ' + dl.length + (dl.length === 1 ? ' day' : ' days') + ' of sales and their attributions. This can\'t be undone.')) return;
+        var w = {};
+        dl.forEach(function (k) { w['days/' + k] = null; w['attrib/' + k] = null; });
+        w.lastUpload = null;
+        rootRef.update(w).then(function () { toast('Upload deleted.'); }).catch(function (err) { toast(failText(err), true); });
       } else if (b.dataset.del) {
         var what = b.dataset.what ? b.dataset.what + "'s sales" : 'this';
         if (!confirm('Delete ' + what + '? This can\'t be undone.')) return;
