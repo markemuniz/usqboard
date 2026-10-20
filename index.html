@@ -230,6 +230,7 @@
         </div>
         <p class="a-err" id="uploadMsg"></p>
         <div id="parsed"></div>
+        <div id="undoBox"></div>
       </section>
 
       <section class="a-card">
@@ -2178,6 +2179,13 @@
         return '<label class="a-toggle' + (on ? '' : ' off') + '"><input type="checkbox" data-panel="' + pp[0] + '"' + (on ? ' checked' : '') + '>' + esc(pp[1]) + '</label>';
       }).join('');
 
+      // Undo last upload
+      var lu = DATA.lastUpload;
+      $('undoBox').innerHTML = lu && lu.prev ? '<div class="a-item" style="margin-top:12px"><div class="grow"><div class="name">Last upload: ' + esc(lu.label || 'report') + '</div>' +
+        '<div class="sub">Saved ' + esc(new Date(lu.at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })) + '. Undo puts those days back the way they were before.</div></div>' +
+        '<button class="a-btn small danger" type="button" id="undoUpload">Undo last upload</button></div>' : '';
+      if ($('undoUpload')) $('undoUpload').addEventListener('click', undoLastUpload);
+
       // Days
       var dk = Object.keys(days()).sort().reverse();
       $('dayList').innerHTML = dk.length ? '<table class="a-table"><thead><tr><th>Day</th><th class="r">Net sales</th><th class="r">Orders</th><th class="r">Budtenders</th><th></th></tr></thead><tbody>' +
@@ -2991,6 +2999,24 @@
       $('savePending').addEventListener('click', savePending);
     }
 
+    function pathVal(path) {
+      var o = DATA, parts = path.split('/');
+      for (var i = 0; i < parts.length; i++) { if (o == null) return null; o = o[parts[i]]; }
+      return o == null ? null : o;
+    }
+    function undoLastUpload() {
+      var lu = DATA.lastUpload;
+      if (!lu || !lu.prev) return;
+      if (!confirm('Undo the last upload (' + (lu.label || 'report') + ')? Those days go back to how they were before it.')) return;
+      var writes = { lastUpload: null };
+      (Array.isArray(lu.prev) ? lu.prev : Object.keys(lu.prev).map(function (k) { return lu.prev[k]; })).forEach(function (e) {
+        var v = null;
+        try { v = JSON.parse(e.v); } catch (x) { v = null; }
+        writes[e.p] = v;
+      });
+      rootRef.update(writes).then(function () { toast('Last upload undone.'); }).catch(function (err) { toast(failText(err), true); });
+    }
+
     function savePending() {
       var btn = $('savePending');
       var writes = {};
@@ -3011,6 +3037,12 @@
           writes['attrib/' + d] = { list: list, uploadedAt: Date.now() };
         });
       }
+      var dayKeys = Object.keys(writes).filter(function (k) { return k.indexOf('days/') === 0; }).map(function (k) { return k.slice(5); }).sort();
+      writes.lastUpload = {
+        at: Date.now(),
+        label: (dayKeys.length ? dayKeys.map(shortDate).join(', ') : 'attributions') + (pendingAttr ? ' + attributions' : ''),
+        prev: Object.keys(writes).map(function (k) { return { p: k, v: JSON.stringify(pathVal(k)) }; })
+      };
       btn.disabled = true;
       rootRef.update(writes).then(function () {
         var n = Object.keys(writes).filter(function (k) { return k.indexOf('days/') === 0; }).length;
