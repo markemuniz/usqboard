@@ -333,6 +333,14 @@
           <button class="a-btn" type="button" id="misResetSave" style="align-self:flex-end">Save date</button>
           <button class="a-btn" type="button" id="misResetClear" style="align-self:flex-end">Clear</button>
         </div>
+        <div class="a-row">
+          <div class="a-field" style="min-width:200px">
+            <label for="misRecord">Record, in days (manual)</label>
+            <input type="number" id="misRecord" min="1" step="1" placeholder="From the log">
+          </div>
+          <button class="a-btn" type="button" id="misRecordSave" style="align-self:flex-end">Save record</button>
+          <button class="a-btn" type="button" id="misRecordClear" style="align-self:flex-end">Clear</button>
+        </div>
       </section>
 
       <section class="a-card">
@@ -585,7 +593,9 @@
     var last = dates[dates.length - 1];
     var current = daysBetween(last, t), best = 0;
     for (var i = 1; i < dates.length; i++) best = Math.max(best, daysBetween(dates[i - 1], dates[i]));
-    return { last: last, current: current, best: best, record: Math.max(best, current), count: dates.length };
+    var manualRec = parseInt(S().misRecord, 10);
+    if (manualRec > 0) best = manualRec;
+    return { last: last, current: current, best: best, record: Math.max(best, current), count: dates.length, manualRec: manualRec > 0 };
   }
 
   /* birthdays and work anniversaries */
@@ -1114,7 +1124,7 @@
     while (r.length < 9) r.push(blank());
     r = r.slice(0, 9);
     r.push(blank());
-    if (m.count > 1 && m.current > m.best) r.push(center('NEW RECORD!'));
+    if ((m.count > 1 || m.manualRec) && m.current > m.best) r.push(center('NEW RECORD!'));
     else r.push(center('RECORD: ' + m.record + (m.record === 1 ? ' DAY' : ' DAYS')));
     r.push(center(MIS_TAGS[cycle % MIS_TAGS.length]));
     return framed(r);
@@ -2075,6 +2085,7 @@
       $('flapSound').checked = s.sound !== false;
       $('soundVol').value = String(s.soundVol || 0.35);
       $('misReset').value = s.misdispenseReset || '';
+      $('misRecord').value = s.misRecord || '';
       $('msgText').dispatchEvent(new Event('input'));
     }
 
@@ -2366,6 +2377,16 @@
     $('misResetClear').addEventListener('click', function () {
       $('misReset').value = '';
       rootRef.child('settings/misdispenseReset').remove().then(function () { toast('Manual date cleared.'); }).catch(function (err) { toast(failText(err), true); });
+    });
+
+    $('misRecordSave').addEventListener('click', function () {
+      var v = parseInt($('misRecord').value, 10);
+      if (!(v > 0)) { toast('Enter the record in days first.', true); return; }
+      rootRef.child('settings/misRecord').set(v).then(function () { toast('Record saved.'); }).catch(function (err) { toast(failText(err), true); });
+    });
+    $('misRecordClear').addEventListener('click', function () {
+      $('misRecord').value = '';
+      rootRef.child('settings/misRecord').remove().then(function () { toast('Record now comes from the log.'); }).catch(function (err) { toast(failText(err), true); });
     });
 
     $('spotForm').addEventListener('submit', function (ev) {
