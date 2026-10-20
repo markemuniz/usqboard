@@ -302,6 +302,11 @@
             <textarea id="shoutText" maxlength="160" required placeholder="Stayed late to help close and walked three first-timers through edibles."></textarea>
             <span class="a-count" id="shoutCount">0 / 160</span>
           </div>
+          <div class="a-row" style="grid-column:1/-1">
+            <label class="a-btn">Add photo (optional)<input type="file" accept="image/*" id="shoutPhotoIn" hidden></label>
+            <span id="shoutPhotoState" class="a-hint"></span>
+          </div>
+          <div id="shoutCrop" style="grid-column:1/-1"></div>
           <div class="a-row"><button class="a-btn primary" type="submit">Post shout-out</button></div>
         </form>
         <div class="a-list" id="shoutList"></div>
@@ -319,6 +324,11 @@
           <button class="a-btn primary" type="button" id="msgSave">Save message</button>
           <button class="a-btn" type="button" id="msgClear">Clear</button>
         </div>
+        <div class="a-label">Photo (optional)</div>
+        <div class="a-row" id="msgPhotoRow">
+          <label class="a-btn">Add photo<input type="file" accept="image/*" id="msgPhotoIn" hidden></label>
+        </div>
+        <div id="msgCrop"></div>
       </section>
 
       <section class="a-card">
@@ -1067,10 +1077,35 @@
     return framed(r);
   }
 
+  // Photo beside text: a photo block on the left (about square on the board) and the
+  // words in a column on the right. Used by shout-outs and the board message.
+  function photoSideRows(key, top, bw, bh) {
+    var r = [];
+    for (var i = 0; i < ROWS; i++) r.push(blank());
+    for (var y = 0; y < bh; y++) for (var x = 0; x < bw; x++) r[top + y][1 + x] = '\u0001' + key + '|' + x + '|' + y + '|' + bw + '|' + bh;
+    return r;
+  }
   function shoutPanel(cycle) {
-    var s = pickRecent(DATA.shoutouts, cycle);
-    if (!s) return null;
+    var SO = DATA.shoutouts || {};
+    var list = Object.keys(SO).filter(function (k) { return SO[k] && SO[k].text; })
+      .sort(function (a, b) { return (SO[b].addedAt || 0) - (SO[a].addedAt || 0); }).slice(0, 12);
+    if (!list.length) return null;
+    var sk = list[cycle % list.length], s = SO[sk];
     var head = center('SHOUT-OUT'); head[0] = '{V}'; head[COLS - 1] = '{V}';
+    if (s.photo) {
+      var BW = 10, BH = 8, r2 = photoSideRows('shout:' + sk, 2, BW, BH);
+      r2[0] = head;
+      var tc = BW + 2, tw = COLS - tc - 1;
+      var L = fitLines(wrap(s.to, tw), 2, tw);
+      L.push('');
+      var room = 10 - L.length - (s.from ? 2 : 0);
+      L = L.concat(fitLines(wrap(s.text, tw), Math.max(1, room), tw));
+      if (s.from) { L.push(''); L = L.concat(fitLines(wrap('- ' + s.from, tw), 1, tw)); }
+      var st = 1 + Math.max(0, Math.floor((10 - L.length) / 2));
+      L.forEach(function (t, i) { var c = txt(t, tw); put(r2[st + i], tc + Math.floor((tw - c.length) / 2), c); });
+      r2[ROWS - 1] = edges('V');
+      return framed(r2);
+    }
     var r = [head, blank(), center(s.to), blank()];
     var lines = fitLines(wrap(s.text, COLS - 2), 5, COLS - 2);
     r = r.concat(middle(lines.map(center), 4, 9));
@@ -1084,7 +1119,26 @@
 
   function messagePanel() {
     var m = String(S().message || '').trim();
-    if (!m) return null;
+    var mp = S().messagePhoto;
+    if (!m && !mp) return null;
+    if (mp && !m) {
+      var BW0 = 16, BH0 = ROWS - 2, r0 = [];
+      for (var i0 = 0; i0 < ROWS; i0++) r0.push(blank());
+      var x0 = Math.floor((COLS - BW0) / 2);
+      for (var y = 0; y < BH0; y++) for (var x = 0; x < BW0; x++) r0[1 + y][x0 + x] = '\u0001msg:|' + x + '|' + y + '|' + BW0 + '|' + BH0;
+      r0[0] = edges('B'); r0[ROWS - 1] = edges('B');
+      return framed(r0);
+    }
+    if (mp) {
+      var BW = 10, BH = 8, r2 = photoSideRows('msg:', 2, BW, BH);
+      var tc = BW + 2, tw = COLS - tc - 1, L = [];
+      m.split(/\n/).forEach(function (para) { L = L.concat(para.trim() ? wrap(para, tw) : ['']); });
+      L = fitLines(L, 10, tw);
+      var st = 1 + Math.max(0, Math.floor((10 - L.length) / 2));
+      L.forEach(function (t, i) { var c = txt(t, tw); put(r2[st + i], tc + Math.floor((tw - c.length) / 2), c); });
+      r2[0] = edges('B'); r2[ROWS - 1] = edges('B');
+      return framed(r2);
+    }
     var lines = [];
     m.split(/\n/).forEach(function (para) { lines = lines.concat(para.trim() ? wrap(para, COLS - 2) : ['']); });
     lines = fitLines(lines, 10, COLS - 2);
@@ -1239,6 +1293,8 @@
     if (String(key).indexOf('pet:') === 0) { var pp = (DATA.pets || {})[key.slice(4)]; return pp && pp.photo; }
     if (String(key).indexOf('bday:') === 0) { var bc = (DATA.bdayCelebs || {})[key.slice(5)]; return bc && bc.photo; }
     if (String(key).indexOf('spot:') === 0) { var sp = (DATA.spotlights || {})[key.slice(5)]; return sp && sp.photo; }
+    if (String(key).indexOf('shout:') === 0) { var so = (DATA.shoutouts || {})[key.slice(6)]; return so && so.photo; }
+    if (String(key).indexOf('msg:') === 0) return S().messagePhoto;
     return (DATA.photos || {})[key];
   }
 
@@ -2123,11 +2179,20 @@
           '<button class="a-btn small danger" type="button" data-del="quotes/' + esc(q._k) + '">Delete</button></div>';
       }).join('') : '<p class="a-empty">No quotes yet.</p>';
 
+      // Board message photo
+      var mph = S().messagePhoto;
+      $('msgPhotoRow').innerHTML = (mph ? '<img class="a-thumb" alt="" src="' + esc(mph) + '">' : '') +
+        '<label class="a-btn">' + (mph ? 'Change photo' : 'Add photo') + '<input type="file" accept="image/*" id="msgPhotoIn" hidden></label>' +
+        (mph ? '<button class="a-btn" type="button" id="msgPhotoDel">Remove photo</button>' : '');
+
       // Shout-outs
       var ss = Object.keys(DATA.shoutouts || {}).map(function (k) { var s = DATA.shoutouts[k]; s._k = k; return s; })
         .sort(function (a, b) { return (b.addedAt || 0) - (a.addedAt || 0); });
       $('shoutList').innerHTML = ss.length ? ss.map(function (s, i) {
         return '<div class="a-item"><div class="grow"><div class="name">To ' + esc(s.to) + (s.from ? ' · from ' + esc(s.from) : '') + (i < 12 ? '' : ' <span class="sub">(not shown)</span>') + '</div><div class="sub">' + esc(s.text) + '</div></div>' +
+          (s.photo ? '<img class="a-thumb" alt="" src="' + esc(s.photo) + '">' : '') +
+          '<label class="a-btn small">' + (s.photo ? 'Change photo' : 'Add photo') + '<input type="file" accept="image/*" data-shoutphoto="' + esc(s._k) + '" hidden></label>' +
+          (s.photo ? '<button class="a-btn small" type="button" data-shoutunphoto="' + esc(s._k) + '">Remove photo</button>' : '') +
           '<button class="a-btn small danger" type="button" data-del="shoutouts/' + esc(s._k) + '">Delete</button></div>';
       }).join('') : '<p class="a-empty">No shout-outs yet.</p>';
 
@@ -2300,11 +2365,62 @@
       }).catch(function (err) { toast(failText(err), true); });
     });
 
+    // Photos for shout-outs and the board message: a square-ish block of 10 x 8 tiles.
+    function sidePhotoOpts(who, boxId, save) {
+      return { who: who, boxId: boxId, grid: [10, 8], fit: true, startCover: true, save: save,
+        hint: 'Drag and zoom to frame the photo, then adjust it if you like. The lines show the board tiles.' };
+    }
+    var shoutPhoto = null;
+    $('shoutPhotoIn').addEventListener('change', function () {
+      var f = this.files && this.files[0];
+      this.value = '';
+      if (!f) return;
+      openCropper('shout', f, sidePhotoOpts('the shout-out', 'shoutCrop', function (data) {
+        shoutPhoto = data;
+        $('shoutPhotoState').innerHTML = '<img class="a-thumb" alt="" src="' + esc(data) + '" style="vertical-align:middle"> Photo ready. <button class="a-btn small" type="button" id="shoutPhotoDrop">Remove</button>';
+        $('shoutPhotoDrop').addEventListener('click', function () { shoutPhoto = null; $('shoutPhotoState').innerHTML = ''; });
+        return Promise.resolve();
+      }));
+    });
+    $('shoutList').addEventListener('change', function (ev) {
+      var inp = ev.target, k = inp.getAttribute && inp.getAttribute('data-shoutphoto');
+      if (!k || !inp.files || !inp.files[0]) return;
+      var f = inp.files[0];
+      inp.value = '';
+      openCropper('shout', f, sidePhotoOpts('the shout-out', 'shoutCrop', function (data) {
+        return rootRef.child('shoutouts/' + k + '/photo').set(data);
+      }));
+    });
+    $('shoutList').addEventListener('click', function (ev) {
+      var b = ev.target.closest && ev.target.closest('[data-shoutunphoto]');
+      if (!b) return;
+      rootRef.child('shoutouts/' + b.getAttribute('data-shoutunphoto') + '/photo').remove()
+        .then(function () { toast('Photo removed.'); }).catch(function (err) { toast(failText(err), true); });
+    });
+    $('msgPhotoRow').addEventListener('change', function (ev) {
+      var inp = ev.target;
+      if (inp.id !== 'msgPhotoIn' || !inp.files || !inp.files[0]) return;
+      var f = inp.files[0];
+      inp.value = '';
+      openCropper('msg', f, sidePhotoOpts('the message', 'msgCrop', function (data) {
+        return rootRef.child('settings/messagePhoto').set(data);
+      }));
+    });
+    $('msgPhotoRow').addEventListener('click', function (ev) {
+      var b = ev.target.closest && ev.target.closest('#msgPhotoDel');
+      if (!b) return;
+      rootRef.child('settings/messagePhoto').remove()
+        .then(function () { toast('Photo removed.'); }).catch(function (err) { toast(failText(err), true); });
+    });
+
     $('shoutForm').addEventListener('submit', function (ev) {
       ev.preventDefault();
       var to = $('shoutTo').value.trim(), from = $('shoutFrom').value.trim(), text = $('shoutText').value.trim();
       if (!to || !text) return;
-      rootRef.child('shoutouts').push({ to: to, from: from, text: text, addedAt: Date.now() }).then(function () {
+      var rec = { to: to, from: from, text: text, addedAt: Date.now() };
+      if (shoutPhoto) rec.photo = shoutPhoto;
+      rootRef.child('shoutouts').push(rec).then(function () {
+        shoutPhoto = null; $('shoutPhotoState').innerHTML = '';
         $('shoutText').value = ''; $('shoutTo').value = ''; $('shoutText').dispatchEvent(new Event('input'));
         toast('Shout-out posted.');
       }).catch(function (err) { toast(failText(err), true); });
@@ -2518,7 +2634,7 @@
       opts = opts || {};
       var url = URL.createObjectURL(file), img = new Image();
       img.onload = function () {
-        ['photoCrop', 'petCrop', 'spotCrop', 'bdcCrop'].forEach(function (id) { var ob = $(id); if (ob) ob.innerHTML = ''; });
+        ['photoCrop', 'petCrop', 'spotCrop', 'bdcCrop', 'shoutCrop', 'msgCrop'].forEach(function (id) { var ob = $(id); if (ob) ob.innerHTML = ''; });
         var box = $(opts.boxId || 'photoCrop');
         if (!box) { box = document.createElement('div'); box.id = 'photoCrop'; $('teamList').insertAdjacentElement('afterend', box); }
         var who = opts.who || ((DATA.team || {})[k] || {}).name || 'their';
@@ -2527,11 +2643,16 @@
         var minZ = opts.fit ? Math.min(img.naturalWidth, img.naturalHeight) / Math.max(img.naturalWidth, img.naturalHeight) : 1;
         box.innerHTML = '<div class="a-crop"><p class="a-hint" style="margin:0">' + hint + '</p>' +
           '<canvas id="cropCv" width="560" height="560"></canvas>' +
-          '<label for="cropZoom" class="a-hint" style="margin:0">Zoom</label><input id="cropZoom" type="range" min="' + minZ + '" max="6" step="0.01" value="' + minZ + '">' +
+          '<label for="cropZoom" class="a-hint" style="margin:0">Zoom</label><input id="cropZoom" type="range" min="' + minZ + '" max="6" step="0.01" value="' + (opts.startCover ? 1 : minZ) + '">' +
+          '<div class="a-row"><button class="a-btn small" type="button" id="cropRot">Rotate</button><button class="a-btn small" type="button" id="cropReset">Reset edits</button></div>' +
+          '<label for="cropBri" class="a-hint" style="margin:0">Brightness</label><input id="cropBri" type="range" min="0.5" max="1.6" step="0.01" value="1.06" style="width:280px;max-width:100%">' +
+          '<label for="cropCon" class="a-hint" style="margin:0">Contrast</label><input id="cropCon" type="range" min="0.5" max="1.8" step="0.01" value="1.08" style="width:280px;max-width:100%">' +
+          '<label for="cropSat" class="a-hint" style="margin:0">Color</label><input id="cropSat" type="range" min="0" max="2" step="0.01" value="1.1" style="width:280px;max-width:100%">' +
           '<div class="a-row"><button class="a-btn primary" type="button" id="cropSave">Save photo</button><button class="a-btn" type="button" id="cropCancel">Cancel</button></div></div>';
         box.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        var cv = $('cropCv'), V = cv.width, W = img.naturalWidth, H = img.naturalHeight;
-        var base = Math.max(V / W, V / H), zoom = minZ, cx = W / 2, cy = opts.fit ? H / 2 : H * 0.4, drag = null;
+        var cv = $('cropCv'), V = cv.width, W = img.naturalWidth, H = img.naturalHeight, src = img, rot = 0;
+        var bri = 1.06, con = 1.08, sat = 1.1;
+        var base = Math.max(V / W, V / H), zoom = opts.startCover ? 1 : minZ, cx = W / 2, cy = opts.fit ? H / 2 : H * 0.4, drag = null;
         // Fit mode: fill the empty edges with the photo's own corner color (usually white).
         var bg = '#000';
         if (opts.fit) {
@@ -2549,8 +2670,8 @@
         function paint(c, size) {
           var g = c.getContext('2d'), sc = base * zoom * size / V;
           g.fillStyle = bg; g.fillRect(0, 0, size, size);
-          try { g.filter = 'brightness(1.06) contrast(1.08) saturate(1.1)'; } catch (e) { }
-          g.drawImage(img, size / 2 - cx * sc, size / 2 - cy * sc, W * sc, H * sc);
+          try { g.filter = 'brightness(' + bri + ') contrast(' + con + ') saturate(' + sat + ')'; } catch (e) { }
+          g.drawImage(src, size / 2 - cx * sc, size / 2 - cy * sc, W * sc, H * sc);
           try { g.filter = 'none'; } catch (e) { }
         }
         function render() {
@@ -2577,6 +2698,29 @@
           $('cropZoom').value = zoom; render();
         }, { passive: false });
         $('cropZoom').addEventListener('input', function () { zoom = +this.value; render(); });
+        function setSrc() {
+          if (rot === 0) { src = img; W = img.naturalWidth; H = img.naturalHeight; }
+          else {
+            var c = document.createElement('canvas'), iw = img.naturalWidth, ih = img.naturalHeight;
+            c.width = rot % 2 ? ih : iw; c.height = rot % 2 ? iw : ih;
+            var g = c.getContext('2d');
+            g.translate(c.width / 2, c.height / 2); g.rotate(rot * Math.PI / 2); g.drawImage(img, -iw / 2, -ih / 2);
+            src = c; W = c.width; H = c.height;
+          }
+          base = Math.max(V / W, V / H);
+          minZ = opts.fit ? Math.min(W, H) / Math.max(W, H) : 1;
+          zoom = opts.startCover ? 1 : minZ; cx = W / 2; cy = opts.fit ? H / 2 : H * 0.4;
+          $('cropZoom').min = minZ; $('cropZoom').value = zoom;
+        }
+        $('cropRot').addEventListener('click', function () { rot = (rot + 1) % 4; setSrc(); render(); });
+        $('cropBri').addEventListener('input', function () { bri = +this.value; render(); });
+        $('cropCon').addEventListener('input', function () { con = +this.value; render(); });
+        $('cropSat').addEventListener('input', function () { sat = +this.value; render(); });
+        $('cropReset').addEventListener('click', function () {
+          bri = 1.06; con = 1.08; sat = 1.1; rot = 0;
+          $('cropBri').value = bri; $('cropCon').value = con; $('cropSat').value = sat;
+          setSrc(); render();
+        });
         function close() { box.innerHTML = ''; URL.revokeObjectURL(url); }
         $('cropCancel').addEventListener('click', close);
         $('cropSave').addEventListener('click', function () {
@@ -2675,6 +2819,7 @@
 
     $('msgClear').addEventListener('click', function () {
       $('msgText').value = ''; $('msgText').dispatchEvent(new Event('input'));
+      if (S().messagePhoto) rootRef.child('settings/messagePhoto').remove();
       rootRef.child('settings/message').set('').then(function () { toast('Message cleared.'); })
         .catch(function (err) { toast(failText(err), true); });
     });
