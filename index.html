@@ -752,6 +752,13 @@
     if (raw == null) raw = DEFAULT_EXCLUDE;
     return String(raw).split(',').map(function (t) { return t.trim().toLowerCase(); }).filter(Boolean);
   }
+  // Board display: first name plus last initial ("James Lewis" -> "James L").
+  function shortName(name) {
+    var w = String(name || '').trim().split(/\s+/).filter(Boolean);
+    if (w.length > 2 && /^(usq|soho|dtbk)$/i.test(w[w.length - 1])) w.pop();
+    if (w.length < 2) return w.join(' ');
+    return w[0] + ' ' + w[w.length - 1].charAt(0).toUpperCase();
+  }
   function isExcluded(name, terms) {
     var n = String(name).toLowerCase().trim();
     var words = n.split(/\s+/);
@@ -988,7 +995,7 @@
         put(row, 1, txt(String(i + 1)));
         var v = txt(fmt(a));
         put(row, COLS - 1 - v.length, v);
-        put(row, 3, txt(a.name, COLS - 1 - v.length - 1 - 3));
+        put(row, 3, txt(shortName(a.name), COLS - 1 - v.length - 1 - 3));
         r.push(row);
       });
     }
@@ -1071,7 +1078,7 @@
         var row = blank();
         var c = Number(x.count) || 0;
         var n = txt(String(c));
-        put(row, 1, txt(x.name, 10));
+        put(row, 1, txt(shortName(x.name), 10));
         put(row, 12, chips('Y', Math.min(c, 12)));
         put(row, COLS - 1 - n.length, n);
         r.push(row);
@@ -1099,7 +1106,7 @@
     r = r.concat(middle(lines.map(center), 2, 8));
     while (r.length < 10) r.push(blank());
     r = r.slice(0, 10);
-    r.push(center('SHOUT-OUT TO ' + q.name));
+    r.push(center('SHOUT-OUT TO ' + shortName(q.name)));
     var stars = blank(); put(stars, Math.floor((COLS - 5) / 2), chips('Y', 5));
     r.push(stars);
     return framed(r);
@@ -1259,16 +1266,16 @@
       e = today[cycle % today.length];
       if (!e.key || !P[e.key]) return null;
       return photoCard(e.key, e.kind === 'bday'
-        ? ['HAPPY', 'BIRTHDAY', '', e.name + '!']
-        : ['HAPPY', e.years + (e.years === 1 ? ' YEAR' : ' YEARS'), 'AT TTA', '', e.name + '!'], true);
+        ? ['HAPPY', 'BIRTHDAY', '', shortName(e.name) + '!']
+        : ['HAPPY', e.years + (e.years === 1 ? ' YEAR' : ' YEARS'), 'AT TTA', '', shortName(e.name) + '!'], true);
     }
     var up = ev.filter(function (x) { return x.key && P[x.key] && x.days > 0; });
     if (!upcoming || !up.length) return null;
     e = up[cycle % up.length];
     var when = e.days === 1 ? 'TOMORROW' : shortMD(e.date);
     return photoCard(e.key, e.kind === 'bday'
-      ? [e.days <= 21 ? 'COMING UP' : 'USQ TEAM', '', e.name, '', 'BIRTHDAY', when]
-      : [e.days <= 21 ? 'COMING UP' : 'USQ TEAM', '', e.name, '', e.years + (e.years === 1 ? ' YEAR' : ' YEARS'), 'AT TTA', when], false);
+      ? [e.days <= 21 ? 'COMING UP' : 'USQ TEAM', '', shortName(e.name), '', 'BIRTHDAY', when]
+      : [e.days <= 21 ? 'COMING UP' : 'USQ TEAM', '', shortName(e.name), '', e.years + (e.years === 1 ? ' YEAR' : ' YEARS'), 'AT TTA', when], false);
   }
   /* ---------- fun pages: records, Green Wednesday, pet of the month, weather ---------- */
   var WX = null;
@@ -1481,7 +1488,7 @@
       var lines = [];
       today.slice(0, 3).forEach(function (e) {
         lines.push(center(e.kind === 'bday' ? 'HAPPY BIRTHDAY' : 'HAPPY ' + e.years + (e.years === 1 ? ' YEAR' : ' YEARS') + ' AT TTA'));
-        lines.push(center(e.name + '!'));
+        lines.push(center(shortName(e.name) + '!'));
         lines.push(blank());
       });
       lines.pop();
@@ -1497,7 +1504,7 @@
       var row = blank();
       put(row, 1, txt(e.days === 1 ? 'TMRW' : shortMD(e.date), 6));
       put(row, COLS - 1 - label.length, label);
-      put(row, 8, txt(e.name, COLS - 1 - label.length - 1 - 8));
+      put(row, 8, txt(shortName(e.name), COLS - 1 - label.length - 1 - 8));
       r.push(row);
     });
     return framed(r);
