@@ -2183,7 +2183,9 @@
       var lu = DATA.lastUpload;
       $('undoBox').innerHTML = lu && lu.prev ? '<div class="a-item" style="margin-top:12px"><div class="grow"><div class="name">Last upload: ' + esc(lu.label || 'report') + '</div>' +
         '<div class="sub">Saved ' + esc(new Date(lu.at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })) + '. Undo puts those days back the way they were before.</div></div>' +
-        '<button class="a-btn small danger" type="button" id="undoUpload">Undo last upload</button></div>' : '';
+        '<button class="a-btn small danger" type="button" id="undoUpload">Undo last upload</button></div>' :
+        '<div class="a-item" style="margin-top:12px"><div class="grow"><div class="name">Undo last upload</div><div class="sub">Nothing to undo yet. After your next upload, you can undo it here.</div></div>' +
+        '<button class="a-btn small" type="button" disabled>Undo last upload</button></div>';
       if ($('undoUpload')) $('undoUpload').addEventListener('click', undoLastUpload);
 
       // Days
