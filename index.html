@@ -2236,9 +2236,11 @@
         w.lastUpload = null;
         rootRef.update(w).then(function () { toast('Upload deleted.'); }).catch(function (err) { toast(failText(err), true); });
       } else if (b.dataset.del) {
-        var what = b.dataset.what ? b.dataset.what + "'s sales" : 'this';
+        var what = b.dataset.what ? b.dataset.what + "'s sales and attributions" : 'this';
         if (!confirm('Delete ' + what + '? This can\'t be undone.')) return;
-        rootRef.child(b.dataset.del).remove().then(function () { toast('Deleted.'); }).catch(function (err) { toast(failText(err), true); });
+        var dw = {}; dw[b.dataset.del] = null;
+        if (b.dataset.del.indexOf('days/') === 0) dw['attrib/' + b.dataset.del.slice(5)] = null;
+        rootRef.update(dw).then(function () { toast('Deleted.'); }).catch(function (err) { toast(failText(err), true); });
       }
     });
 
