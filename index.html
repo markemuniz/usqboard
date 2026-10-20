@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600&family=Barlow:wght@400;500;600;700&display=swap">
 <style>
   /* Split-flap board for the TV, plus a PIN-locked admin page at #admin.
-     Board: near-black bezel, charcoal flaps, warm white characters, NYC subway line color chips. */
+     Board: near-black bezel, charcoal flaps, warm white characters, airport departures color chips. */
   :root {
     --bezel: #070707;
     --frame: #0B0B0B;
@@ -18,16 +18,18 @@
     --flap-lo: #141414;
     --char: #F1F0EC;
     --seam: rgba(0, 0, 0, 0.78);
-    /* NYC subway line colors (MTA) */
-    --R: #EE352E; /* 1 2 3 */
-    --O: #FF6319; /* B D F M */
-    --Y: #FCCC0A; /* N Q R W */
-    --G: #00933C; /* 4 5 6 */
-    --B: #0039A6; /* A C E */
-    --V: #B933AD; /* 7 */
-    --L: #6CBE45; /* G */
-    --N: #996633; /* J Z */
-    --S: #A7A9AC; /* L, S */
+    /* Airport departures palette */
+    --R: #E5383B; /* delayed / cancelled red */
+    --O: #FF9F1C; /* amber */
+    --Y: #FFC72C; /* wayfinding sign yellow */
+    --G: #2BB673; /* on-time green */
+    --B: #3A86FF; /* sky blue */
+    --V: #7B6CF6; /* twilight violet */
+    --L: #2EC4B6; /* teal */
+    --N: #C08552; /* tan */
+    --S: #A7A9AC; /* gray */
+    --sign: #FFC72C;
+    --sign-ink: #111111;
     --W: #F1F0EC;
     --K: #2C2C2C;
 
@@ -37,7 +39,7 @@
     --a-line: #2A2E35;
     --a-ink: #ECEDEF;
     --a-muted: #9A9FA8;
-    --a-accent: #FCCC0A;
+    --a-accent: #FFC72C;
     --a-on-accent: #141005;
     --a-danger: #FF6B5E;
     --a-ok: #3CCB6E;
@@ -51,9 +53,30 @@
   /* ---------- TV board ---------- */
   #tv {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    display: flex; align-items: center; justify-content: center;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
     background: var(--bezel); overflow: hidden; cursor: none;
   }
+
+  /* ---------- Airport departures signage ---------- */
+  .ap-bar { display: flex; align-items: center; box-sizing: border-box; flex: none; color: #fff; font-family: var(--ui-font); }
+  #apHead { height: 11vh; gap: 2vh; }
+  #apFoot { height: 6vh; gap: 1.6vh; }
+  .ap-ico { flex: none; height: 8vh; width: 8vh; border-radius: 1vh; background: var(--sign); display: flex; align-items: center; justify-content: center; }
+  .ap-ico svg { width: 72%; height: 72%; fill: var(--sign-ink); }
+  .ap-title { display: flex; flex-direction: column; justify-content: center; line-height: 1; }
+  .ap-title b { font-size: 6.2vh; font-weight: 700; letter-spacing: 0.06em; }
+  .ap-title span { font-size: 1.9vh; font-weight: 500; letter-spacing: 0.32em; color: #A9ADB5; margin-top: 0.7vh; text-transform: uppercase; }
+  .ap-sp { flex: 1; }
+  .ap-sign { flex: none; display: flex; align-items: center; gap: 1vh; background: var(--sign); color: var(--sign-ink); font-weight: 700; letter-spacing: 0.08em; border-radius: 0.8vh; padding: 0 1.6vh; text-transform: uppercase; }
+  #apHead .ap-sign { height: 6.4vh; font-size: 3.2vh; }
+  #apFoot .ap-sign { height: 4.2vh; font-size: 2vh; }
+  .ap-sign svg { height: 70%; width: auto; fill: var(--sign-ink); }
+  .ap-clock { flex: none; display: flex; flex-direction: column; align-items: flex-end; line-height: 1; }
+  .ap-clock b { font-family: var(--flap-font); font-size: 6vh; font-weight: 600; color: var(--sign); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+  .ap-clock span { font-size: 1.9vh; letter-spacing: 0.3em; color: #A9ADB5; margin-top: 0.7vh; }
+  .ap-msg { font-size: 2.1vh; letter-spacing: 0.22em; color: #C9CCD2; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ap-dark { background: #1C1D20; color: #fff; }
+  .ap-dark svg { fill: #fff; }
   #board {
     display: grid;
     background: var(--frame);
@@ -187,7 +210,20 @@
 <body>
 
 <div id="tv" hidden>
+  <div id="apHead" class="ap-bar">
+    <div class="ap-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" transform="rotate(45 12 12)"/></svg></div>
+    <div class="ap-title"><b>DEPARTURES</b><span>TTA Union Square</span></div>
+    <div class="ap-sp"></div>
+    <div class="ap-sign"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11h12.2l-5.6-5.6L12 4l8 8-8 8-1.4-1.4 5.6-5.6H4z"/></svg>Gate USQ</div>
+    <div class="ap-clock"><b id="apTime">--:--</b><span id="apDate"></span></div>
+  </div>
   <div id="board" role="img" aria-label="USQ team board"></div>
+  <div id="apFoot" class="ap-bar">
+    <div class="ap-sign"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" transform="rotate(45 12 12)"/></svg>Now boarding</div>
+    <div class="ap-msg">Thanks for flying The Travel Agency</div>
+    <div class="ap-sp"></div>
+    <div class="ap-sign ap-dark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c.9 2.6 1.2 5.3.9 8 1.4-2 3.3-3.6 5.6-4.5-.6 2.6-2 5-4 6.7 2-.4 4.1-.2 6 .5-2 1.3-4.4 2-6.8 1.9 1.1.9 2 2 2.6 3.3-1.6 0-3.2-.5-4.5-1.4V22h-1.6v-5.5c-1.3.9-2.9 1.4-4.5 1.4.6-1.3 1.5-2.4 2.6-3.3-2.4.1-4.8-.6-6.8-1.9 1.9-.7 4-.9 6-.5-2-1.7-3.4-4.1-4-6.7 2.3.9 4.2 2.5 5.6 4.5-.3-2.7 0-5.4.9-8z"/></svg>Union Square</div>
+  </div>
   <div id="dot"></div>
 </div>
 
@@ -825,9 +861,11 @@
     return r;
   }
   function chips(code, n) { var a = []; for (var i = 0; i < n; i++) a.push('{' + code + '}'); return a; }
+  // Taxiway stripe: yellow and dark dashes with a plane in the middle.
   function rainbow() {
-    var seq = 'RGVBOLNSY', r = [];
-    for (var i = 0; i < COLS; i++) r.push('{' + seq.charAt(Math.floor(i * seq.length / COLS)) + '}');
+    var r = [], mid = Math.floor(COLS / 2);
+    for (var i = 0; i < COLS; i++) r.push(i % 3 === 2 ? '{K}' : '{Y}');
+    r[mid - 1] = ' '; r[mid] = '✈'; r[mid + 1] = ' ';
     return r;
   }
   function edges(code) { var r = blank(); r[0] = '{' + code + '}'; r[COLS - 1] = '{' + code + '}'; return r; }
@@ -1192,7 +1230,7 @@
   }
 
   function confetti(shift) {
-    var seq = 'RYBGOSVLNRGYOB', r = [];
+    var seq = 'YBGOYRWLY', r = [];
     for (var i = 0; i < COLS; i++) r.push('{' + seq.charAt((i + shift) % seq.length) + '}');
     return r;
   }
@@ -1366,7 +1404,7 @@
     for (y = 1; y < FH; y++) ring.push([y, FW - 1]);
     for (x = FW - 2; x >= 0; x--) ring.push([FH - 1, x]);
     for (y = FH - 2; y >= 1; y--) ring.push([y, 0]);
-    var seq = 'RGVBOLNSY';
+    var seq = 'YYK';
     ring.forEach(function (rc, n) { r[rc[0]][rc[1]] = '{' + seq.charAt((Math.floor(n / 2) + cycle) % seq.length) + '}'; });
     r[0][0] = r[0][FW - 1] = r[FH - 1][0] = r[FH - 1][FW - 1] = '🐾';
     var BW = FW - 2, BH = FH - 2;
@@ -1653,7 +1691,7 @@
     tv.hidden = false;
     var STILL = /[?&]still\b/.test(location.search);
     var CYCLE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    var COLOR_CODES = 'ROYGBVLNSW';
+    var COLOR_CODES = 'YOGBRW';
     var tiles = [], cur = [], tgt = [], anim = [], running = false;
 
     for (var i = 0; i < ROWS * COLS; i++) {
@@ -1687,7 +1725,8 @@
       el._p = true;
     }
     function sizeBoard() {
-      var vw = window.innerWidth, vh = window.innerHeight;
+      var apH = document.getElementById('apHead'), apF = document.getElementById('apFoot');
+      var vw = window.innerWidth, vh = window.innerHeight - (apH ? apH.offsetHeight : 0) - (apF ? apF.offsetHeight : 0);
       var outer = Math.round(Math.min(vw, vh) * 0.03);
       var ratio = 0.76, gapR = 0.12;
       var wByW = (vw - outer * 4) / (COLS + (COLS - 1) * gapR);
@@ -1701,6 +1740,9 @@
       boardEl.style.gridGap = g + 'px';
       boardEl.style.padding = outer + 'px';
       boardEl.style.borderRadius = Math.round(outer * 0.5) + 'px';
+      var bw = COLS * w + (COLS - 1) * g + outer * 2;
+      if (apH) apH.style.width = bw + 'px';
+      if (apF) apF.style.width = bw + 'px';
       var fs = Math.round(h * 0.66);
       var radius = Math.max(1, Math.round(w * 0.07));
       var seam = Math.max(1, Math.round(h * 0.025));
@@ -1714,6 +1756,15 @@
       }
     }
     sizeBoard();
+    (function apClock() {
+      var t = document.getElementById('apTime'), d = document.getElementById('apDate');
+      function tick() {
+        var n = new Date(), h = n.getHours(), m = n.getMinutes();
+        if (t) t.textContent = ((h % 12) || 12) + ':' + (m < 10 ? '0' : '') + m + (h < 12 ? ' AM' : ' PM');
+        if (d) d.textContent = n.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase();
+      }
+      tick(); setInterval(tick, 10000);
+    })();
     window.addEventListener('resize', function () {
       sizeBoard();
       for (var q = 0; q < tiles.length; q++) if (cur[q].charAt(0) === '\u0001') setTile(q, cur[q], false);
