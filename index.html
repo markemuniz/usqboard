@@ -1,0 +1,3028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>USQ Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600&family=Barlow:wght@400;500;600;700&display=swap">
+<style>
+  /* Split-flap board for the TV, plus a PIN-locked admin page at #admin.
+     Board: near-black bezel, charcoal flaps, warm white characters, seven color chips. */
+  :root {
+    --bezel: #070707;
+    --frame: #0B0B0B;
+    --flap: #1B1B1B;
+    --flap-hi: #242424;
+    --flap-lo: #141414;
+    --char: #F1F0EC;
+    --seam: rgba(0, 0, 0, 0.78);
+    --R: #E0362C;
+    --O: #F47B20;
+    --Y: #F6C21C;
+    --G: #22A04B;
+    --B: #2369D6;
+    --V: #7A3EA1;
+    --W: #F1F0EC;
+    --K: #2C2C2C;
+
+    --a-bg: #0D0E10;
+    --a-card: #16181C;
+    --a-field: #1E2126;
+    --a-line: #2A2E35;
+    --a-ink: #ECEDEF;
+    --a-muted: #9A9FA8;
+    --a-accent: #F6C21C;
+    --a-on-accent: #141005;
+    --a-danger: #FF6B5E;
+    --a-ok: #3CCB6E;
+
+    --flap-font: "Barlow Semi Condensed", "Arial Narrow", Arial, sans-serif;
+    --ui-font: "Barlow", "Segoe UI", Arial, sans-serif;
+  }
+  html, body { margin: 0; height: 100%; background: var(--bezel); color: var(--a-ink); font-family: var(--ui-font); }
+  [hidden] { display: none !important; }
+
+  /* ---------- TV board ---------- */
+  #tv {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bezel); overflow: hidden; cursor: none;
+  }
+  #board {
+    display: grid;
+    background: var(--frame);
+    box-shadow: inset 0 0 0 1px #1C1C1C, 0 0 80px rgba(0, 0, 0, 0.9);
+  }
+  .t {
+    position: relative; overflow: hidden;
+    background: linear-gradient(180deg, var(--flap-hi) 0%, var(--flap) 49%, var(--flap-lo) 51%, var(--flap) 100%);
+    color: var(--char);
+    font-family: var(--flap-font); font-weight: 600;
+    text-align: center;
+  }
+  .t::after {
+    content: ""; position: absolute; left: 0; right: 0; top: 50%;
+    height: var(--seam-h, 2px); margin-top: calc(var(--seam-h, 2px) / -2);
+    background: var(--seam);
+  }
+  .t.f::before {
+    content: ""; position: absolute; left: 0; right: 0; top: 0; height: 50%;
+    background: rgba(255, 255, 255, 0.07);
+  }
+  .t.cR, .t.cO, .t.cY, .t.cG, .t.cB, .t.cV, .t.cW, .t.cK {
+    background-image: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 49%, rgba(0,0,0,0.16) 51%, rgba(0,0,0,0.04) 100%);
+  }
+  .t.cR { background-color: var(--R); }
+  .t.cO { background-color: var(--O); }
+  .t.cY { background-color: var(--Y); }
+  .t.cG { background-color: var(--G); }
+  .t.cB { background-color: var(--B); }
+  .t.cV { background-color: var(--V); }
+  .t.cW { background-color: var(--W); }
+  .t.cK { background-color: var(--K); }
+  #dot {
+    position: fixed; right: 10px; bottom: 8px; width: 7px; height: 7px; border-radius: 50%;
+    background: #3A3A3A;
+  }
+  #dot.on { background: #1E6E39; }
+
+  /* ---------- Admin ---------- */
+  #admin {
+    min-height: 100%; background: var(--a-bg); color: var(--a-ink);
+    padding: 24px 16px 80px; box-sizing: border-box;
+  }
+  #admin * { box-sizing: border-box; }
+  .a-wrap { width: 100%; max-width: 860px; margin: 0 auto; display: grid; grid-gap: 16px; grid-template-columns: minmax(0, 1fr); }
+  .a-head { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; grid-gap: 12px; }
+  .a-eyebrow { margin: 0; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--a-muted); font-weight: 600; }
+  .a-head h1 { margin: 2px 0 0; font-family: var(--flap-font); font-weight: 600; font-size: 34px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .a-card { background: var(--a-card); border: 1px solid var(--a-line); border-radius: 14px; padding: 18px; display: grid; grid-gap: 14px; min-width: 0; }
+  .a-card h2 { margin: 0; font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--a-muted); font-weight: 600; }
+  .a-grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); grid-gap: 14px; }
+  .a-hint { margin: 0; font-size: 14px; color: var(--a-muted); line-height: 1.45; }
+  .a-err { margin: 0; font-size: 14px; color: var(--a-danger); }
+  .a-err:empty { display: none; }
+  .a-field { display: grid; grid-gap: 6px; min-width: 0; }
+  .a-field label, .a-label { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--a-muted); font-weight: 600; }
+  .a-field input, .a-field select, .a-field textarea {
+    width: 100%; font: inherit; font-size: 16px; color: var(--a-ink);
+    background: var(--a-field); border: 1px solid var(--a-line); border-radius: 10px; padding: 10px 12px; min-height: 44px;
+  }
+  .a-field textarea { resize: vertical; min-height: 80px; line-height: 1.4; }
+  .a-field input:focus, .a-field select:focus, .a-field textarea:focus { outline: none; border-color: var(--a-accent); }
+  .a-field .a-row select { flex: 1; min-width: 0; }
+  .a-toggles { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); grid-gap: 8px; }
+  .a-toggle {
+    display: flex; align-items: center; grid-gap: 10px; padding: 10px 12px; cursor: pointer;
+    background: var(--a-field); border: 1px solid var(--a-line); border-radius: 10px; font-size: 15px;
+  }
+  .a-toggle input { width: 20px; height: 20px; margin: 0; accent-color: var(--a-accent); flex: none; }
+  .a-toggle.off { color: var(--a-muted); }
+  .a-count { font-size: 12px; color: var(--a-muted); justify-self: end; }
+  .a-row { display: flex; flex-wrap: wrap; grid-gap: 10px; align-items: center; }
+  .a-btn {
+    display: inline-flex; align-items: center; justify-content: center; min-height: 42px; padding: 0 18px;
+    border-radius: 10px; border: 1px solid var(--a-line); background: var(--a-field); color: var(--a-ink);
+    font: inherit; font-weight: 600; font-size: 15px; cursor: pointer; text-decoration: none;
+  }
+  .a-btn:hover { border-color: var(--a-muted); }
+  .a-btn.primary { background: var(--a-accent); border-color: var(--a-accent); color: var(--a-on-accent); }
+  .a-btn.small { min-height: 34px; padding: 0 12px; font-size: 14px; }
+  .a-btn.icon { width: 40px; padding: 0; font-size: 20px; }
+  .a-btn.danger { color: var(--a-danger); }
+  .a-btn[disabled] { opacity: 0.5; cursor: progress; }
+  :focus-visible { outline: 2px solid var(--a-accent); outline-offset: 2px; }
+  .a-preview { position: relative; width: 100%; padding-top: 56.25%; border-radius: 10px; overflow: hidden; background: #000; }
+  .a-preview iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+  .a-status { display: inline-flex; align-items: center; grid-gap: 8px; font-size: 14px; color: var(--a-muted); }
+  .a-status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--a-muted); }
+  .a-status.on::before { background: var(--a-ok); }
+  .a-list { display: grid; grid-gap: 8px; }
+  .a-item {
+    display: flex; align-items: center; grid-gap: 12px; padding: 10px 12px;
+    background: var(--a-field); border: 1px solid var(--a-line); border-radius: 10px; min-width: 0;
+  }
+  .a-item .grow { flex: 1; min-width: 0; }
+  .a-item .name { font-weight: 600; }
+  .a-item .sub { font-size: 14px; color: var(--a-muted); overflow-wrap: anywhere; }
+  .a-num { font-family: var(--flap-font); font-size: 22px; font-weight: 600; min-width: 32px; text-align: center; font-variant-numeric: tabular-nums; }
+  .a-stars { color: var(--a-accent); letter-spacing: 1px; font-size: 14px; }
+  .a-table-wrap { overflow-x: auto; }
+  .a-table { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
+  .a-table th, .a-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--a-line); white-space: nowrap; }
+  .a-table th { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--a-muted); font-weight: 600; }
+  .a-table td.r, .a-table th.r { text-align: right; }
+  .a-empty { margin: 0; font-size: 15px; color: var(--a-muted); }
+  .a-toast {
+    position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 10;
+    background: var(--a-ink); color: var(--a-bg); padding: 12px 18px; border-radius: 10px; font-weight: 600;
+    max-width: calc(100% - 32px);
+  }
+  .a-toast.bad { background: var(--a-danger); color: #1A0503; }
+  /* Emoji tiles: emoji glyphs sit smaller than capital letters, so bump them up. */
+  /* Leaf tiles: the cannabis leaf picture sits on a normal flap. */
+  .t.leaf {
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgBAMAAAAQtmoLAAAAMFBMVEUAAAAIgwgAfAD5+PlXoVdho2Foq2gLcguqyKqrsat9fX3Y4dip16mQt5BlomWOuY4jI6zbAAAAEHRSTlMA/PwP5aUIBGILAlMVY2yWNnnwvwAACAFJREFUeNqVmG1sHMUZx39ze7nz+eVun41DW1Fjr5sKQZpk4QJ2SELsxKhUTYRDUoGAqBZIlWhlcSIUCmqQeWmRaCNFiloBKpLVVEArPkQQ0VCF5IIJgYDlBYdABSGXOKlNIbk5YvyGz9MPZ+debFNuvqxmd/77f97nmYEyhzXfh+SSA2au94F5f3VDmLIA3fZIeQA7Ua52WyiPwdLlASzKtrd45QFCUp5IkWfwyqIILRCShW75f4Bdb7hFgFlGKKVPKGd9ZQGBV1msw7X9pQztUBAbPcsniwFPxkspMlDA8PdBVfw5qIu1ClvrHLspP12wvliJ0MobI8V/+JMjdj6+k2+kkkUiTTRNjhbJFP6VgaR30UQ72v0ZWXIPvaa6wS8AjO/dinx2UeCNwZFEMcA/NvhyUSTtKJwt//qk93axlXw1srRIBwW6a2Zy1MYvdVzUKY7/dSKuNW2ZUK9bX5rgoagsKvB2ZFVAJO/qTU5dabRaE1R35QGXj8fA2Hfn0M0Zvi4FjP7c02/nfXdcAfaucwDcMnlyjvCvchzZ2XFRwpgj4tohgMptGVfau0sZnlpr7OTFt513AtpeATD5mqvtEas047IDtj78zxn/n9MxUJM+wL+CMTK9W0sB/RtR1U+3TM/8zQA/esWD0MYaMC2zMqlp/yDj5xd/ZwiAocEU8FVLwz5CV344hn1/877SqlItriPtM2rfLCIiAN0rXBHZbJUyVClrDHX6aK7Ed1QMjYGZymKdvmxoDPuSJr9Eh+G7DdC8tRvAeiEFEDyaJPLJIQ2k/FnV4PCLB8f4T+TLPqDiaz0GxJo/2seK/4IKnhmYBei+xR6D7+0xwKRpHgLG/G46J/QYamrGGgWVz9+jgU96kwAJAYgex7Le02Cqs4VxnxuV41GANEDE/MTXqNCl2U+GHQNKnZtd0YL3Tg2BarJ/s49AxekxIBvlhoZTAAfeGpoFMO/UDQHjS9I+TFQAkBrq+8weA/vjq4/Mqt7Zp+61gYzeDdnsckCFQ1YcDbC9brYOVJumPlCqzsfipoOgqhbiOwZU6PPsHPvD8FMARi0EsknADONtAjBLHsjncp4hEgzaGlR4EIsogPUFm3wN6qqeiRmVO/MMo4/tBjATnpftbAFU2OpJaiDW+cz0mmuzTxcEbHWVIyJSm6LSyrgizk/ZKyIi9TMrnmPVzwKEZorF1F9zjwSmwtVg3o702oAauQ6g8jluuz4SCPxi4ng8Bxh5LG0DXPBGxwxA1WgCwPy4BeD3t608bH38YuDhjVf2bsuRHA+4AL14na2AWlzVAGBvuQTCiW2rKjakTiUCPwyn4zv83bmd0weMtCf0PTYY+wqlAfp9vPGdD4feU1O8xs6o1A54WIAV3+SKiLMeWl0RZ8MhERG5zCIciRrHEbcdAokvfzC1bFE8+0vIZgczgOkFpYEjrQpQ7yfiT1/e78SMmnzFA0JWa6O0bSbSQQhHRNylCU6JiLv5UUdEXL+D6DmnUcRtAQJM7OjSfPr6jaPPE1yz3IbMmQFSNjCQNKCGvZZ4z4pYGoZv80BBeDJqa1u/e2H14/ztUwNqWcOxE2C/ucSAffCJSPplDNj1M4Wx43FHxJE6wiFLiYhzaUK5Iq4vIrLYSy4Q1xWR2uMd03vcbq73MWI+/uDJ8WhKQ3BX/Bzos7ZGZf7SkrkqDbD2ypnwzm7dY0M6s/KuN5deyIDJbEdDdAMQW9byiJsGFNsTFxMock2wD5B0vW9NNWjsL7+KgJ0xKOvS/lhMA3bTR/7FBBp9PW0DaZGubBeQWXCNAssD6G+NaQDr1paCFPU+qLY1qNhXz94eNKjqwRqDaU0iw+maXLld8/longF/yW4NGF11Z+NBMKGpmK2Ch1CmZ0MMQJnTR/zCIhAOW5IGVOyl5rDB7ru5D2ytQl9EDaBiI595RQDuatzvAyjr+vMpTeBAu5Y0auqUpwHiq/f4Rb0G3dm9nRowk4e/n0FVgErbOra3IdeI37Nx1qa4M5nrHdT4E2ttLDAaNflbG1As3r5zdiGzXrvZANgXMjWm9o8J3D57/zUGYLn256h8WNHpg8DV51PYKVBW/TkNkq7/8Ap/js546zJPAWQOX9B6iwITjwIqHQyP+3M1sP0nz4YAqHEXjmVPAQuGNDL60J6zc/fe2WsfuE8JkPn3tsxbBlXZoFHpdb++v6TzKhwrTmBrWHf+TF0f5xcaZd6vs7Lzd/d/7hvWGUG9rid9go/G7Fi47sEj1d/Q5ntYGWkUd7PjOra4ckeuxu+eH7ET63etrlMbEFc1LuqyupoHXq3ymJ/Eeg5WnxFXXFda/KC0iSuLKx4j/NC8MsXjqWjQcUUWtzniuI2O6zi1t3s8OKeVnr+j5w9JQBkE0pLO+V6lrYNL5wSw4oTCBkPm6qxv67z1A20vzAVYsyCVzmXYVZnQd5OS6wxQttGsHsAv8YNlBU9Or1+3tvfIS/fVp5UAdiy99MSJQ7MZOhY9a3L/u3zfsXfDr3avfKcG0Xbauvcf/hwWqrRaXRHHlbaNbDsGVhJWHdgSbIt7hMlvhvmx1mlsbHSlPu7RcQbgug6IW3HonstxYau1UaT2prhHaBoAK98kQXwePz/itt16Nu4RAhLBeTybfx8yPWs+2P8C4XjW/4YjZB7wzNmp7US2HvV7v+151SO0K++SeS4dikZP0WE1/C0YCkdNqLwDe2R9dXnrK0iUdcSfCKbKvXUo885h/nuN/wFoZLW2QsTJugAAAABJRU5ErkJggg=="), linear-gradient(180deg, var(--flap-hi) 0%, var(--flap) 49%, var(--flap-lo) 51%, var(--flap) 100%);
+    background-size: 82% auto, 100% 100%; background-position: center, center; background-repeat: no-repeat, no-repeat;
+  }
+  .t.e { font-size: calc(var(--fs, 20px) * 1.18) !important; }
+  /* Photo tiles: each tile shows its own slice of a photo, so the picture flips in tile by tile. */
+  .t.p { background-color: #111; background-repeat: no-repeat; }
+  .t.p::after { background: rgba(0, 0, 0, 0.18); }
+  .a-crop { margin-top: 12px; padding: 12px; border: 1px solid var(--a-line); border-radius: 10px; display: grid; grid-gap: 10px; justify-items: start; }
+  #cropCv { width: 280px; max-width: 100%; height: auto; border-radius: 8px; touch-action: none; cursor: grab; background: #000; }
+  #cropZoom { width: 280px; max-width: 100%; }
+  .a-thumb { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; flex: none; }
+</style>
+</head>
+<body>
+
+<div id="tv" hidden>
+  <div id="board" role="img" aria-label="USQ team board"></div>
+  <div id="dot"></div>
+</div>
+
+<div id="admin" hidden>
+  <div class="a-wrap">
+    <header class="a-head">
+      <div>
+        <p class="a-eyebrow">TTA Union Square</p>
+        <h1>Board Admin</h1>
+      </div>
+      <a class="a-btn" id="openBoard" href="#">Open TV board</a>
+    </header>
+
+    <section class="a-card" id="gate">
+      <h2>Enter PIN</h2>
+      <form id="gateForm" class="a-row">
+        <div class="a-field" style="flex:1;min-width:180px">
+          <label for="pinInput">Manager PIN</label>
+          <input id="pinInput" type="password" autocomplete="off">
+        </div>
+        <button class="a-btn primary" type="submit" style="align-self:flex-end">Unlock</button>
+      </form>
+      <p class="a-err" id="gateMsg"></p>
+    </section>
+
+    <div id="adminMain" class="a-wrap" hidden>
+      <section class="a-card">
+        <div class="a-row" style="justify-content:space-between">
+          <h2>Live preview</h2>
+          <span class="a-status" id="connState">Connecting…</span>
+        </div>
+        <div class="a-preview"><iframe id="preview" title="Board preview"></iframe></div>
+      </section>
+
+      <section class="a-card">
+        <h2>Pages on the board</h2>
+        <p class="a-hint">Turn pages on or off. Changes show up on the TV right away. Pages with nothing to show, like an empty shout-out list, skip themselves.</p>
+        <div class="a-toggles" id="panelToggles"></div>
+      </section>
+
+      <section class="a-card">
+        <h2>Upload Dutchie report</h2>
+        <p class="a-hint">Use the same sales report as the ATV contest. It needs Budtender Name, Order ID, Total Inventory Sold and Net Sales columns. Upload yesterday's report each morning. Re-uploading a day replaces it. To credit attributions, also choose the attribution export, either at the same time or right after.</p>
+        <div class="a-row">
+          <label class="a-btn primary" for="reportFile">Choose report</label>
+          <input type="file" id="reportFile" accept=".xlsx,.xls,.csv" multiple hidden>
+        </div>
+        <p class="a-err" id="uploadMsg"></p>
+        <div id="parsed"></div>
+      </section>
+
+      <section class="a-card">
+        <h2 id="attrTitle">Kiosk sales / attributions</h2>
+        <p class="a-hint">A budtender gets credit when the customer they logged buys the same day, matched by customer name in the Dutchie report. Credit goes to the person on the attribution, even if someone else rang the sale. Choose the attribution export and the Dutchie report together in Upload Dutchie report above. Uploading the full export again is fine: saved days are replaced and your review choices are kept. Blank names and test entries are skipped, and the same purchase only counts once.</p>
+        <div id="attrSummary" style="min-width:0"></div>
+        <div id="attrReview" style="min-width:0"></div>
+        <div id="attrNone" style="min-width:0"></div>
+      </section>
+
+      <section class="a-card">
+        <h2>Goals</h2>
+        <form id="goalForm" class="a-grid2">
+          <div class="a-field">
+            <label for="dailyGoal">Daily sales goal ($)</label>
+            <input id="dailyGoal" type="number" min="0" step="100" inputmode="numeric" placeholder="20000">
+          </div>
+          <div class="a-field">
+            <label for="monthlyGoal">Monthly sales goal ($)</label>
+            <input id="monthlyGoal" type="number" min="0" step="1000" inputmode="numeric" placeholder="600000">
+          </div>
+          <div class="a-row"><button class="a-btn primary" type="submit">Save goals</button></div>
+        </form>
+      </section>
+
+      <section class="a-card">
+        <h2 id="starTitle">Star Board</h2>
+        <p class="a-hint">Add a star every time a Google review names someone. Names come from uploaded reports, or add one below.</p>
+        <div class="a-list" id="starList"></div>
+        <form id="addNameForm" class="a-row">
+          <div class="a-field" style="flex:1;min-width:180px">
+            <label for="newName">Add a name</label>
+            <input id="newName" type="text" maxlength="24" placeholder="Alex R">
+          </div>
+          <button class="a-btn" type="submit" style="align-self:flex-end">Add</button>
+        </form>
+      </section>
+
+      <section class="a-card">
+        <h2>Google review quotes</h2>
+        <form id="quoteForm" class="a-grid2">
+          <div class="a-field">
+            <label for="quoteName">Review mentions</label>
+            <input id="quoteName" type="text" list="nameList" maxlength="24" placeholder="Alex R" required>
+          </div>
+          <div class="a-field" style="grid-column:1/-1">
+            <label for="quoteText">What the review said</label>
+            <textarea id="quoteText" maxlength="220" required placeholder="Alex knew exactly what I was looking for and made the whole visit easy."></textarea>
+            <span class="a-count" id="quoteCount">0 / 220</span>
+          </div>
+          <div class="a-row"><button class="a-btn primary" type="submit">Add quote</button></div>
+        </form>
+        <div class="a-list" id="quoteList"></div>
+      </section>
+
+      <section class="a-card">
+        <h2>Shout-outs</h2>
+        <form id="shoutForm" class="a-grid2">
+          <div class="a-field">
+            <label for="shoutTo">Shout-out to</label>
+            <input id="shoutTo" type="text" list="nameList" maxlength="24" required placeholder="Jordan T">
+          </div>
+          <div class="a-field">
+            <label for="shoutFrom">From (optional)</label>
+            <input id="shoutFrom" type="text" maxlength="24" placeholder="Mark">
+          </div>
+          <div class="a-field" style="grid-column:1/-1">
+            <label for="shoutText">Message</label>
+            <textarea id="shoutText" maxlength="160" required placeholder="Stayed late to help close and walked three first-timers through edibles."></textarea>
+            <span class="a-count" id="shoutCount">0 / 160</span>
+          </div>
+          <div class="a-row"><button class="a-btn primary" type="submit">Post shout-out</button></div>
+        </form>
+        <div class="a-list" id="shoutList"></div>
+      </section>
+
+      <section class="a-card">
+        <h2>Board message</h2>
+        <p class="a-hint">A free message that gets its own panel, like a team note or reminder. Leave it empty to skip the panel.</p>
+        <div class="a-field">
+          <label for="msgText">Message</label>
+          <textarea id="msgText" maxlength="200" placeholder="Inventory count Sunday 8 AM. Coffee is on me."></textarea>
+          <span class="a-count" id="msgCount">0 / 200</span>
+        </div>
+        <div class="a-row">
+          <button class="a-btn primary" type="button" id="msgSave">Save message</button>
+          <button class="a-btn" type="button" id="msgClear">Clear</button>
+        </div>
+      </section>
+
+      <section class="a-card">
+        <h2>Days without a misdispense</h2>
+        <p class="a-hint" id="misInfo">Checking the misdispense log…</p>
+        <p class="a-hint">The counter reads your misdispense log on its own and resets when someone logs an incident. Only set a date here if an incident didn't get logged.</p>
+        <div class="a-row">
+          <div class="a-field" style="min-width:200px">
+            <label for="misReset">Last misdispense (manual)</label>
+            <input type="date" id="misReset">
+          </div>
+          <button class="a-btn" type="button" id="misResetSave" style="align-self:flex-end">Save date</button>
+          <button class="a-btn" type="button" id="misResetClear" style="align-self:flex-end">Clear</button>
+        </div>
+      </section>
+
+      <section class="a-card">
+        <h2>Product spotlight</h2>
+        <p class="a-hint">Add a product to feature. If there's more than one, the board takes turns showing them.</p>
+        <form id="spotForm" class="a-grid2">
+          <div class="a-field">
+            <label for="spotProduct">Product</label>
+            <input id="spotProduct" type="text" maxlength="40" required placeholder="Wyld Elderberry 2:1 Gummies">
+          </div>
+          <div class="a-field">
+            <label for="spotBrand">Brand</label>
+            <input id="spotBrand" type="text" maxlength="20" placeholder="Wyld">
+          </div>
+          <div class="a-field">
+            <label for="spotPrice">Price</label>
+            <input id="spotPrice" type="text" maxlength="12" placeholder="28">
+          </div>
+          <div class="a-field" style="grid-column:1/-1">
+            <label for="spotPoints">Talking points (one per line, up to 3)</label>
+            <textarea id="spotPoints" maxlength="150" placeholder="Our #1 Wyld flavor last month&#10;2:1 THC to CBN&#10;Real fruit, vegan"></textarea>
+          </div>
+          <div class="a-field" style="grid-column:1/-1">
+            <label for="spotPhoto">Product photo (optional)</label>
+            <input id="spotPhoto" type="file" accept="image/*">
+          </div>
+          <div class="a-row"><button class="a-btn primary" type="submit" id="spotSubmit">Add spotlight</button><button class="a-btn" type="button" id="spotCancel" hidden>Cancel edit</button></div>
+        </form>
+        <div id="spotCrop"></div>
+        <div class="a-list" id="spotList"></div>
+      </section>
+
+      <section class="a-card">
+        <h2>Birthdays and anniversaries</h2>
+        <p class="a-hint">Birthdays save the month and day only. Check that people are OK with it before adding them. Start dates turn into work anniversaries. Add a photo next to someone's name and it flips onto the board around their day. Ask before adding anyone's photo.</p>
+        <form id="teamForm" class="a-grid2">
+          <div class="a-field">
+            <label for="teamName">Name</label>
+            <input id="teamName" type="text" list="nameList" maxlength="24" required placeholder="Sam L">
+          </div>
+          <div class="a-field">
+            <span class="a-label">Birthday</span>
+            <div class="a-row" style="flex-wrap:nowrap">
+              <select id="bdayMonth" aria-label="Birthday month"></select>
+              <select id="bdayDay" aria-label="Birthday day"></select>
+            </div>
+          </div>
+          <div class="a-field">
+            <label for="teamStart">Start date</label>
+            <input id="teamStart" type="date">
+          </div>
+          <div class="a-row"><button class="a-btn primary" type="submit">Save</button></div>
+        </form>
+        <div class="a-list" id="teamList"></div>
+      </section>
+
+      <section class="a-card">
+        <h2>Birthday celebration</h2>
+        <p class="a-hint">Celebrate someone on their birthday: their photo framed in cannabis leaves with your message. It only shows on the date you pick, and it comes up more often than the other pages that day.</p>
+        <form id="bdcForm" class="a-grid2">
+          <div class="a-field">
+            <label for="bdcName">Name</label>
+            <input id="bdcName" type="text" maxlength="22" required placeholder="Sam">
+          </div>
+          <div class="a-field">
+            <label for="bdcDate">Date</label>
+            <input id="bdcDate" type="date" required>
+          </div>
+          <div class="a-field" style="grid-column:1/-1">
+            <label for="bdcMsg">Birthday message (short is best)</label>
+            <textarea id="bdcMsg" maxlength="90" placeholder="Have the best day! The whole USQ team loves you"></textarea>
+          </div>
+          <div class="a-field" style="grid-column:1/-1">
+            <label for="bdcPhoto">Photo</label>
+            <input id="bdcPhoto" type="file" accept="image/*">
+          </div>
+          <div class="a-row"><button class="a-btn primary" type="submit" id="bdcSubmit">Next: crop the photo</button><button class="a-btn" type="button" id="bdcCancel" hidden>Cancel edit</button></div>
+        </form>
+        <div id="bdcCrop"></div>
+        <div class="a-list" id="bdcList"></div>
+      </section>
+
+      <section class="a-card">
+        <h2>Pet of the month</h2>
+        <p class="a-hint">Add a team pet's name and photo, then crop it so the pet fills the square. If there's more than one pet, the board takes turns.</p>
+        <form id="petForm" class="a-grid2">
+          <div class="a-field">
+            <label for="petName">Pet's name</label>
+            <input id="petName" type="text" maxlength="22" required placeholder="Biscuit">
+          </div>
+          <div class="a-field">
+            <label for="petOwner">Whose pet (optional)</label>
+            <input id="petOwner" type="text" maxlength="22" placeholder="Sam's dog">
+          </div>
+          <div class="a-field" style="grid-column:1/-1">
+            <label for="petPhoto">Photo</label>
+            <input id="petPhoto" type="file" accept="image/*" required>
+          </div>
+          <div class="a-row"><button class="a-btn primary" type="submit">Next: crop the photo</button></div>
+        </form>
+        <div id="petCrop"></div>
+        <div class="a-list" id="petList"></div>
+      </section>
+
+      <section class="a-card">
+        <h2>Trivia</h2>
+        <label class="a-row" for="builtinTrivia" style="font-size:15px">
+          <input type="checkbox" id="builtinTrivia" style="width:20px;height:20px">
+          Include the 20 built-in cannabis trivia questions
+        </label>
+        <form id="triviaForm" class="a-grid2">
+          <div class="a-field" style="grid-column:1/-1">
+            <label for="triviaQ">Question</label>
+            <textarea id="triviaQ" maxlength="140" required placeholder="Which brand on our shelf makes the Elderberry gummies?"></textarea>
+          </div>
+          <div class="a-field" style="grid-column:1/-1">
+            <label for="triviaA">Answer</label>
+            <input id="triviaA" type="text" maxlength="100" required placeholder="Wyld">
+          </div>
+          <div class="a-row"><button class="a-btn primary" type="submit">Add question</button></div>
+        </form>
+        <div class="a-list" id="triviaList"></div>
+      </section>
+
+      <section class="a-card">
+        <h2>Uploaded days</h2>
+        <div class="a-table-wrap" id="dayList"></div>
+      </section>
+
+      <section class="a-card">
+        <h2>Settings</h2>
+        <form id="settingsForm" class="a-grid2">
+          <div class="a-field">
+            <label for="rotateSecs">Seconds per panel</label>
+            <input id="rotateSecs" type="number" min="6" max="90" step="1" placeholder="15">
+          </div>
+          <div class="a-field">
+            <label for="minDay">Min orders, yesterday</label>
+            <input id="minDay" type="number" min="1" step="1" placeholder="10">
+          </div>
+          <div class="a-field">
+            <label for="minMonth">Min orders, month to date</label>
+            <input id="minMonth" type="number" min="1" step="1" placeholder="50">
+          </div>
+          <div class="a-field" style="grid-column:1/-1">
+            <label for="exclude">Leave off the leaderboards (comma separated, *word* hides any name containing it)</label>
+            <input id="exclude" type="text" placeholder="Manager names">
+          </div>
+          <div class="a-field">
+            <label for="soundVol">Flap sound volume</label>
+            <select id="soundVol"><option value="0.15">Soft</option><option value="0.35">Medium</option><option value="0.7">Loud</option></select>
+          </div>
+          <label class="a-row" for="flapSound" style="font-size:15px;grid-column:1/-1">
+            <input type="checkbox" id="flapSound" style="width:20px;height:20px">
+            Play the flap sound on the TV. Browsers need one button press on the remote, or one click on the screen, before sound can start.
+          </label>
+          <div class="a-row"><button class="a-btn primary" type="submit">Save settings</button></div>
+        </form>
+      </section>
+    </div>
+  </div>
+  <datalist id="nameList"></datalist>
+  <div class="a-toast" id="toast" role="status" aria-live="polite" hidden></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  /* ================= config ================= */
+  var COLS = 28, ROWS = 12;
+  var ROOT = 'usqBoard';
+  var PIN = 'USQ2026';
+  var DEFAULT_EXCLUDE = '';
+  var firebaseConfig = {
+    apiKey: "AIzaSyAagyUGnM-kqbiLy5rHjALPp2LtbM8KVmQ",
+    authDomain: "soho-board.firebaseapp.com",
+    databaseURL: "https://soho-board-default-rtdb.firebaseio.com",
+    projectId: "soho-board",
+    storageBucket: "soho-board.firebasestorage.app",
+    messagingSenderId: "275130060759",
+    appId: "1:275130060759:web:121dd51aa3ca891788c592"
+  };
+
+  var DATA = {};
+  var loaded = false;
+  var isAdmin = location.hash.replace('#', '').toLowerCase() === 'admin';
+  var db = null, rootRef = null;
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+    rootRef = db.ref(ROOT);
+  } catch (e) { db = null; }
+
+  window.addEventListener('hashchange', function () { location.reload(); });
+
+  /* ================= shared helpers ================= */
+  var DOW = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+  var MON = ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'];
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function ymd(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+  function parseYmd(s) { var p = s.split('-'); return new Date(+p[0], +p[1] - 1, +p[2], 12); }
+  function addDays(s, n) { var d = parseYmd(s); d.setDate(d.getDate() + n); return ymd(d); }
+  function todayStr() { return ymd(new Date()); }
+  function shortDate(s) { var d = parseYmd(s); return DOW[d.getDay()].slice(0, 3) + ' ' + MON[d.getMonth()].slice(0, 3) + ' ' + d.getDate(); }
+  function monthName(s) { return MON[parseYmd(s).getMonth()]; }
+  function daysInMonth(s) { var d = parseYmd(s); return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(); }
+  function money(n) { return '$' + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  function vals(o) { return o ? Object.keys(o).map(function (k) { return o[k]; }) : []; }
+  function safeKey(s) { return String(s).replace(/[\s\u0000-\u001F\u007F]+/g, ' ').trim().replace(/[.#$\[\]\/]/g, '_') || '_'; }
+  function S() { return DATA.settings || {}; }
+  function num(v, d) { v = Number(v); return isFinite(v) && v > 0 ? v : d; }
+  function days() { return DATA.days || {}; }
+  function daysBetween(a, b) { return Math.round((parseYmd(b) - parseYmd(a)) / 86400000); }
+  function shortMD(s) { var d = parseYmd(s); return MON[d.getMonth()].slice(0, 3) + ' ' + d.getDate(); }
+  function isLeap(y) { return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0; }
+  function byNewest(a, b) { return (b.addedAt || 0) - (a.addedAt || 0); }
+  function anyToYmd(v) {
+    if (v == null || v === '') return null;
+    var s = String(v).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+    if (m) { var y = +m[3]; if (y < 100) y += 2000; return y + '-' + pad2(+m[1]) + '-' + pad2(+m[2]); }
+    var d = new Date(s);
+    return isNaN(d.getTime()) ? null : ymd(d);
+  }
+
+  /* misdispense log (Google Sheet behind the misdispense page) */
+  var MIS_URL = 'https://script.google.com/macros/s/AKfycbw4UjJ644UWUo-ZvUK0IRu5C17J4THepEoowWCsiVqjfmQP8zvOyXXjmaXlGsX1-v1b/exec?action=get';
+  var MIS = { dates: [], loaded: false, error: false };
+  function fetchMis(cb) {
+    if (!window.fetch) { MIS.error = true; if (cb) cb(); return; }
+    fetch(MIS_URL + '&_t=' + Date.now()).then(function (r) { return r.text(); }).then(function (t) {
+      var data = JSON.parse(t);
+      var set = {};
+      ((data && data.entries) || []).forEach(function (e) { var d = anyToYmd(e && e.date); if (d) set[d] = 1; });
+      MIS.dates = Object.keys(set).sort();
+      MIS.loaded = true; MIS.error = false;
+    }).catch(function () { MIS.error = true; }).then(function () { if (cb) cb(); });
+  }
+  function misStats() {
+    var t = todayStr();
+    var dates = MIS.dates.slice();
+    var manual = S().misdispenseReset;
+    if (manual && /^\d{4}-\d{2}-\d{2}$/.test(manual)) dates.push(manual);
+    dates = dates.filter(function (d) { return d <= t; }).sort();
+    if (!dates.length) return null;
+    var last = dates[dates.length - 1];
+    var current = daysBetween(last, t), best = 0;
+    for (var i = 1; i < dates.length; i++) best = Math.max(best, daysBetween(dates[i - 1], dates[i]));
+    return { last: last, current: current, best: best, record: Math.max(best, current), count: dates.length };
+  }
+
+  /* birthdays and work anniversaries */
+  function nextOccur(mmdd, today) {
+    var y = +today.slice(0, 4), mm = +mmdd.slice(0, 2), dd = +mmdd.slice(3, 5);
+    function mk(year) { var d = (mm === 2 && dd === 29 && !isLeap(year)) ? 28 : dd; return year + '-' + pad2(mm) + '-' + pad2(d); }
+    var c = mk(y);
+    if (c < today) c = mk(y + 1);
+    return c;
+  }
+  function celebrations(withinDays) {
+    var t = todayStr(), out = [];
+    Object.keys(DATA.team || {}).forEach(function (tk) {
+      var p = DATA.team[tk];
+      if (!p || !p.name) return;
+      if (p.bday && /^\d{2}-\d{2}$/.test(p.bday)) {
+        var d = nextOccur(p.bday, t);
+        out.push({ date: d, name: p.name, key: tk, kind: 'bday', days: daysBetween(t, d) });
+      }
+      if (p.start && /^\d{4}-\d{2}-\d{2}$/.test(p.start)) {
+        var d2 = nextOccur(p.start.slice(5), t);
+        var yrs = +d2.slice(0, 4) - +p.start.slice(0, 4);
+        if (yrs >= 1) out.push({ date: d2, name: p.name, key: tk, kind: 'anniv', years: yrs, days: daysBetween(t, d2) });
+      }
+    });
+    return out.filter(function (e) { return e.days <= withinDays; })
+      .sort(function (a, b) { return a.days - b.days || String(a.name).localeCompare(String(b.name)); });
+  }
+
+  /* trivia */
+  var TRIVIA = [
+    { q: 'Which terpene gives lemons, oranges and a lot of citrusy strains their smell?', a: 'Limonene' },
+    { q: 'Which terpene smells like a pine forest?', a: 'Pinene' },
+    { q: "Black pepper's spicy kick comes from which terpene that's also common in cannabis?", a: 'Beta-caryophyllene' },
+    { q: 'Linalool is the main scent compound in which purple flower?', a: 'Lavender' },
+    { q: 'Humulene is named after the plant that makes beer bitter. What is it?', a: 'Hops' },
+    { q: 'Myrcene is found in cannabis and in which tropical fruit?', a: 'Mango' },
+    { q: 'What does THC stand for?', a: 'Tetrahydrocannabinol' },
+    { q: 'What does CBD stand for?', a: 'Cannabidiol' },
+    { q: 'Raw flower is mostly THCA. What turns THCA into THC?', a: "Heat. It's called decarboxylation." },
+    { q: 'Which tiny resin glands on the flower make most of the cannabinoids and terpenes?', a: 'Trichomes' },
+    { q: 'How many grams are in an eighth?', a: '3.5 grams' },
+    { q: 'How many grams are in an ounce?', a: 'About 28 (28.35 to be exact)' },
+    { q: 'What makes live resin different from a regular extract?', a: "It's made from fresh-frozen plants instead of dried and cured ones" },
+    { q: 'Rosin is made with only two things. What are they?', a: 'Heat and pressure. No solvents.' },
+    { q: "What's the golden rule for a first-time edible customer?", a: 'Start low and go slow' },
+    { q: 'What is kief?', a: 'The loose trichomes that sift off the flower' },
+    { q: 'What do you call the big cluster of buds at the top of the plant?', a: 'The cola' },
+    { q: 'Under federal law, hemp can have no more than what percent delta-9 THC by dry weight?', a: '0.3 percent' },
+    { q: 'Why do edibles take longer to kick in than smoking?', a: "They're digested and processed by the liver first, so it can take 30 minutes to 2 hours" },
+    { q: "What does 'full spectrum' mean on a label?", a: "It keeps a broad range of the plant's cannabinoids and terpenes, not one isolated compound" }
+  ];
+  function triviaList() {
+    var custom = vals(DATA.trivia).filter(function (x) { return x && x.q && x.a; })
+      .sort(function (a, b) { return (a.addedAt || 0) - (b.addedAt || 0); });
+    return custom.concat(S().builtinTrivia === false ? [] : TRIVIA);
+  }
+
+  var PANELS = [
+    ['welcome', 'Welcome message'],
+    ['home', 'Sales and goals'],
+    ['mis', 'Days without a misdispense'],
+    ['uptDay', 'UPT leaders, yesterday'],
+    ['atvDay', 'ATV leaders, yesterday'],
+    ['uptMonth', 'UPT leaders, month to date'],
+    ['atvMonth', 'ATV leaders, month to date'],
+    ['attrib', 'Kiosk sales / attributions, month to date'],
+    ['stars', 'Star Board'],
+    ['quote', 'Google review quotes'],
+    ['shout', 'Shout-outs'],
+    ['spotlight', 'Product spotlight'],
+    ['celebrate', 'Birthdays and anniversaries'],
+    ['trivia', 'Trivia'],
+    ['message', 'Board message'],
+    ['weather', 'USQ weather'],
+    ['records', 'Record board'],
+    ['countdown', 'Green Wednesday countdown'],
+    ['pet', 'Pet of the month'],
+    ['bdayToday', 'Birthday celebration'],
+    ['onthisday', 'On this day'],
+    ['nycfact', 'NYC fact']
+  ];
+  function panelOn(name) {
+    var key = (name === 'trivQ' || name === 'trivA') ? 'trivia' : (name === 'celebPhoto' ? 'celebrate' : name);
+    var p = S().panels || {};
+    return p[key] !== false;
+  }
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+  function excludeTerms() {
+    var raw = S().exclude;
+    if (raw == null) raw = DEFAULT_EXCLUDE;
+    return String(raw).split(',').map(function (t) { return t.trim().toLowerCase(); }).filter(Boolean);
+  }
+  function isExcluded(name, terms) {
+    var n = String(name).toLowerCase().trim();
+    var words = n.split(/\s+/);
+    for (var i = 0; i < terms.length; i++) {
+      var t = terms[i];
+      if (t.indexOf('*') >= 0) { if (n.indexOf(t.replace(/\*/g, '')) >= 0) return true; continue; }
+      if (t.indexOf(' ') >= 0 ? n.indexOf(t) >= 0 : words.indexOf(t) >= 0) return true;
+    }
+    return false;
+  }
+  function latestDay() {
+    var t = todayStr();
+    var keys = Object.keys(days()).filter(function (k) { return k < t; }).sort();
+    return keys.length ? keys[keys.length - 1] : null;
+  }
+  function boardMonth() {
+    var ld = latestDay();
+    return (ld || todayStr()).slice(0, 7);
+  }
+  function monthDays(mk) {
+    return Object.keys(days()).filter(function (k) { return k.slice(0, 7) === mk && k < todayStr(); }).sort();
+  }
+  function leaders(dayKeys, metric, minTxn) {
+    var agg = {};
+    dayKeys.forEach(function (k) {
+      var b = (days()[k] || {}).budtenders || {};
+      Object.keys(b).forEach(function (id) {
+        var x = b[id];
+        if (!agg[id]) agg[id] = { name: x.name || id, txn: 0, units: 0, net: 0 };
+        agg[id].txn += Number(x.txn) || 0;
+        agg[id].units += Number(x.units) || 0;
+        agg[id].net += Number(x.net) || 0;
+      });
+    });
+    var terms = excludeTerms();
+    return vals(agg).filter(function (a) {
+      return a.txn >= minTxn && !isExcluded(a.name, terms);
+    }).map(function (a) {
+      a.upt = a.units / a.txn;
+      a.atv = a.net / a.txn;
+      return a;
+    }).sort(function (a, b) { return b[metric] - a[metric]; });
+  }
+  function rosterNames() {
+    var terms = excludeTerms();
+    var seen = {}, out = [];
+    function add(n) {
+      n = String(n || '').trim();
+      if (!n || isExcluded(n, terms)) return;
+      var k = safeKey(n).toLowerCase();
+      if (seen[k]) return;
+      seen[k] = 1; out.push(n);
+    }
+    var mk = todayStr().slice(0, 7);
+    vals(((DATA.stars || {})[mk]) || {}).forEach(function (s) { add(s.name); });
+    vals(DATA.roster || {}).forEach(function (r) { add(r.name); });
+    var recent = Object.keys(days()).sort().slice(-31);
+    recent.forEach(function (k) { vals((days()[k] || {}).budtenders).forEach(function (b) { add(b.name); }); });
+    return out.sort(function (a, b) { return a.localeCompare(b); });
+  }
+
+  /* ================= board text helpers ================= */
+  var ALLOWED = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$()-+&=;:'\"%,./?°";
+  // Emoji support: text is split into whole characters (graphemes) so an emoji,
+  // even one built from several code points like a flag or a skin tone, lands
+  // on a single tile. Anything else outside ALLOWED still becomes a blank tile.
+  var SEG = null;
+  try { if (typeof Intl !== 'undefined' && Intl.Segmenter) SEG = new Intl.Segmenter(); } catch (e) { SEG = null; }
+  var EMOJI_RE = null;
+  try { EMOJI_RE = new RegExp('\\p{Extended_Pictographic}|\\p{Regional_Indicator}', 'u'); } catch (e) { EMOJI_RE = /[\uD800-\uDBFF]/; }
+  function graphemes(s) {
+    s = String(s == null ? '' : s);
+    if (SEG) {
+      var a = [], it = SEG.segment(s)[Symbol.iterator](), n;
+      while (!(n = it.next()).done) a.push(n.value.segment);
+      return a;
+    }
+    return Array.from ? Array.from(s) : s.split('');
+  }
+  function isEmoji(g) { return g.length > 0 && EMOJI_RE.test(g); }
+  function clean(s) {
+    s = String(s == null ? '' : s);
+    if (s.normalize) s = s.normalize('NFD').replace(/[̀-ͯ]/g, '');
+    s = s.toUpperCase().replace(/[‘’]/g, "'").replace(/[“”]/g, '"')
+      .replace(/[–—]/g, '-').replace(/…/g, '...');
+    var g = graphemes(s), out = [];
+    for (var i = 0; i < g.length; i++) {
+      var ch = g[i];
+      if (ch.length === 1 && ALLOWED.indexOf(ch) >= 0) out.push(ch);
+      else if (isEmoji(ch)) out.push(ch);
+      else out.push(' ');
+    }
+    return out;
+  }
+  function blank() { var r = []; for (var i = 0; i < COLS; i++) r.push(' '); return r; }
+  function put(r, col, cells) {
+    for (var i = 0; i < cells.length; i++) { var c = col + i; if (c >= 0 && c < COLS) r[c] = cells[i]; }
+    return r;
+  }
+  function txt(s, max) { var c = clean(s); if (max != null && c.length > max) c = c.slice(0, Math.max(0, max)); return c; }
+  function center(s) { var c = txt(s, COLS); return put(blank(), Math.floor((COLS - c.length) / 2), c); }
+  function lr(left, right) {
+    var r = blank();
+    var R = txt(right, COLS - 4);
+    put(r, COLS - 1 - R.length, R);
+    put(r, 1, txt(left, COLS - 3 - R.length));
+    return r;
+  }
+  function chips(code, n) { var a = []; for (var i = 0; i < n; i++) a.push('{' + code + '}'); return a; }
+  function rainbow() {
+    var seq = 'ROYGBV', r = [];
+    for (var i = 0; i < COLS; i++) r.push('{' + seq.charAt(Math.floor(i * seq.length / COLS)) + '}');
+    return r;
+  }
+  function edges(code) { var r = blank(); r[0] = '{' + code + '}'; r[COLS - 1] = '{' + code + '}'; return r; }
+  function bar(pct) {
+    var r = blank();
+    var label = txt(Math.round(pct * 100) + '%');
+    var w = COLS - 3 - label.length;
+    var filled = Math.max(0, Math.min(w, Math.round(Math.min(pct, 1) * w)));
+    var color = pct >= 1 ? 'G' : (pct >= 0.8 ? 'Y' : 'O');
+    for (var i = 0; i < w; i++) r[1 + i] = i < filled ? '{' + color + '}' : '{K}';
+    put(r, COLS - 1 - label.length, label);
+    return r;
+  }
+  function glen(s) { return clean(s).length; }
+  function wrap(s, width) {
+    var words = String(s || '').replace(/\s+/g, ' ').trim().split(' ');
+    var lines = [], cur = '';
+    words.forEach(function (w) {
+      if (!w) return;
+      var g = clean(w);
+      while (g.length > width) { if (cur) { lines.push(cur); cur = ''; } lines.push(g.slice(0, width).join('')); g = g.slice(width); }
+      w = g.join('');
+      if (!w) return;
+      if (!cur) cur = w;
+      else if (glen(cur) + 1 + g.length <= width) cur += ' ' + w;
+      else { lines.push(cur); cur = w; }
+    });
+    if (cur) lines.push(cur);
+    return lines;
+  }
+  function fitLines(lines, max, width) {
+    if (lines.length <= max) return lines;
+    var out = lines.slice(0, max);
+    var last = out[max - 1];
+    if (glen(last) > width - 3) last = clean(last).slice(0, width - 3).join('').replace(/\s+\S*$/, '');
+    out[max - 1] = last + '...';
+    return out;
+  }
+  function framed(rows) {
+    var p = rows.slice(0, ROWS);
+    while (p.length < ROWS) p.push(blank());
+    return p;
+  }
+  function middle(rows, top, bottom) {
+    var space = bottom - top + 1;
+    var lead = Math.max(0, Math.floor((space - rows.length) / 2));
+    var out = [];
+    for (var i = 0; i < lead; i++) out.push(blank());
+    return out.concat(rows).slice(0, space);
+  }
+
+  /* ================= panels ================= */
+  function dayLabel(d) { return d === addDays(todayStr(), -1) ? 'YESTERDAY' : shortDate(d); }
+
+  function idlePanel() {
+    var now = new Date();
+    return framed([rainbow(), blank(), blank(), blank(), center('TTA USQ'), blank(),
+      center(DOW[now.getDay()] + ' ' + MON[now.getMonth()].slice(0, 3) + ' ' + now.getDate()), blank(), blank(), blank(), blank(), rainbow()]);
+  }
+  function loadingPanel() {
+    return framed([rainbow(), blank(), blank(), blank(), center('TTA USQ'), blank(), center('CONNECTING...'), blank(), blank(), blank(), blank(), rainbow()]);
+  }
+
+  function welcomePanel() {
+    var now = new Date(), h = now.getHours();
+    var hello = h < 12 ? 'GOOD MORNING' : (h < 17 ? 'GOOD AFTERNOON' : 'GOOD EVENING');
+    var r = [rainbow(), lr('TTA USQ', DOW[now.getDay()].slice(0, 3) + ' ' + MON[now.getMonth()].slice(0, 3) + ' ' + now.getDate())];
+    r = r.concat(middle([center('🌿 ' + hello + ' TEAM 🌿'), blank(), center("LET'S HAVE A GREAT DAY")], 2, 10));
+    while (r.length < ROWS - 1) r.push(blank());
+    r.push(rainbow());
+    return framed(r);
+  }
+
+  function homePanel() {
+    var now = new Date();
+    var r = [rainbow(), lr('TTA USQ', DOW[now.getDay()].slice(0, 3) + ' ' + MON[now.getMonth()].slice(0, 3) + ' ' + now.getDate())];
+    var ld = latestDay();
+    if (!ld) {
+      r = r.concat(middle([center((now.getHours() < 12 ? 'GOOD MORNING' : 'GOOD AFTERNOON') + ' TEAM'), blank(), center("LET'S HAVE A GREAT DAY")], 2, 10));
+      while (r.length < ROWS - 1) r.push(blank());
+      r.push(rainbow());
+      return framed(r);
+    }
+    var d = days()[ld], s = S();
+    var dg = num(s.dailyGoal, 0), mg = num(s.monthlyGoal, 0);
+    var mk = ld.slice(0, 7), md = monthDays(mk);
+    var mtd = md.reduce(function (sum, k) { return sum + (Number(days()[k].netSales) || 0); }, 0);
+    var body = [];
+    body.push(lr(dayLabel(ld), money(d.netSales || 0)));
+    if (dg) { body.push(lr('DAILY GOAL', money(dg))); body.push(bar((d.netSales || 0) / dg)); }
+    body.push(blank());
+    var lastDayNum = parseYmd(ld).getDate(), dim = daysInMonth(ld);
+    var monthDone = lastDayNum === dim;
+    body.push(lr(monthName(ld) + (monthDone ? ' FINAL' : ' TO DATE'), money(mtd)));
+    if (mg) {
+      body.push(lr('MONTH GOAL', money(mg)));
+      body.push(bar(mtd / mg));
+      var left = dim - lastDayNum;
+      if (mtd >= mg) body.push(center('GOAL HIT! ' + money(mtd - mg) + ' OVER'));
+      else if (left > 0) body.push(center('NEED ' + money((mg - mtd) / left) + '/DAY TO HIT IT'));
+      else body.push(center(money(mg - mtd) + ' SHORT. NEW MONTH, NEW GOAL'));
+    } else if (md.length) {
+      body.push(center('AVERAGING ' + money(mtd / md.length) + ' A DAY'));
+    }
+    r = r.concat(middle(body, 2, 10));
+    while (r.length < ROWS - 1) r.push(blank());
+    r = r.slice(0, ROWS - 1);
+    r.push(rainbow());
+    return framed(r);
+  }
+
+  function leaderPanel(title, sub, list, fmt, foot, minTxn) {
+    var r = [center(title), center(sub), blank()];
+    if (!list.length) {
+      r = r.concat(middle([center('NO ONE QUALIFIES YET'), blank(), center('MIN ' + minTxn + ' ORDERS')], 3, 10));
+    } else {
+      list.slice(0, 8).forEach(function (a, i) {
+        var row = blank();
+        if (i < 3) row[0] = '{' + ['Y', 'W', 'O'][i] + '}';
+        put(row, 1, txt(String(i + 1)));
+        var v = txt(fmt(a));
+        put(row, COLS - 1 - v.length, v);
+        put(row, 3, txt(a.name, COLS - 1 - v.length - 1 - 3));
+        r.push(row);
+      });
+    }
+    while (r.length < ROWS - 1) r.push(blank());
+    r = r.slice(0, ROWS - 1);
+    r.push(center(foot));
+    return framed(r);
+  }
+  function fmtUpt(a) { return a.upt.toFixed(2); }
+  function fmtAtv(a) { return '$' + a.atv.toFixed(2); }
+
+  function dayLeaders(metric) {
+    var ld = latestDay();
+    if (!ld) return null;
+    var min = num(S().minTxnDay, 10);
+    var list = leaders([ld], metric, min);
+    var title = metric === 'upt' ? 'UPT LEADERS' : 'ATV LEADERS';
+    var sub = ld === addDays(todayStr(), -1) ? 'YESTERDAY - ' + shortDate(ld) : shortDate(ld);
+    return leaderPanel(title, sub, list, metric === 'upt' ? fmtUpt : fmtAtv,
+      metric === 'upt' ? 'UNITS PER ORDER' : 'AVERAGE TICKET', min);
+  }
+  function monthLeaders(metric) {
+    var ld = latestDay();
+    if (!ld) return null;
+    var mk = ld.slice(0, 7), md = monthDays(mk);
+    if (md.length < 2) return null;
+    var min = num(S().minTxnMonth, 50);
+    var list = leaders(md, metric, min);
+    var title = monthName(ld) + (metric === 'upt' ? ' UPT' : ' ATV');
+    return leaderPanel(title, 'MONTH TO DATE - ' + md.length + ' DAYS', list, metric === 'upt' ? fmtUpt : fmtAtv,
+      metric === 'upt' ? 'UNITS PER ORDER' : 'AVERAGE TICKET', min);
+  }
+
+  /* ---------- attributions ---------- */
+  // DATA.attrib[day].list[id] = { by, c, t, st, net, sold, ot }
+  // st: auto (matched), ok (approved in review), review, no (rejected), none (no sale), dup
+  function attribCredited(st) { return st === 'auto' || st === 'ok'; }
+  function attribMonth() {
+    var t = todayStr();
+    var keys = Object.keys(DATA.attrib || {}).filter(function (k) { return k <= t; }).sort();
+    return keys.length ? keys[keys.length - 1].slice(0, 7) : null;
+  }
+  function attribDays(mk) {
+    return Object.keys(DATA.attrib || {}).filter(function (k) { return k.slice(0, 7) === mk; }).sort();
+  }
+  function attribStats(mk) {
+    var agg = {};
+    attribDays(mk).forEach(function (d) {
+      vals(((DATA.attrib || {})[d] || {}).list).forEach(function (e) {
+        if (!e || !e.by || e.st === 'dup') return;
+        var k = safeKey(e.by).toLowerCase();
+        var a = agg[k] || (agg[k] = { name: e.by, logged: 0, credited: 0, review: 0, net: 0 });
+        a.logged++;
+        if (attribCredited(e.st)) { a.credited++; a.net += Number(e.net) || 0; }
+        if (e.st === 'review') a.review++;
+      });
+    });
+    return vals(agg).sort(function (a, b) { return b.net - a.net || b.credited - a.credited || a.name.localeCompare(b.name); });
+  }
+  function attribPanel() {
+    var mk = attribMonth();
+    if (!mk) return null;
+    var terms = excludeTerms();
+    var list = attribStats(mk).filter(function (a) { return a.credited > 0 && !isExcluded(a.name, terms); });
+    if (!list.length) return null;
+    var n = attribDays(mk).length;
+    return leaderPanel('KIOSK SALES/ATTRIBUTIONS', MON[+mk.slice(5, 7) - 1] + ' TO DATE - ' + n + (n === 1 ? ' DAY' : ' DAYS'), list,
+      function (a) { var c = String(a.credited), m = money(a.net); while (c.length < 3) c = ' ' + c; while (m.length < 6) m = ' ' + m; return c + '  ' + m; }, 'SALES CREDITED - NET SALES', 1);
+  }
+
+  function starPanel() {
+    var mk = todayStr().slice(0, 7);
+    var st = vals(((DATA.stars || {})[mk]) || {}).filter(function (x) { return (Number(x.count) || 0) > 0; })
+      .sort(function (a, b) { return b.count - a.count || String(a.name).localeCompare(String(b.name)); });
+    var r = [center(MON[new Date().getMonth()] + ' STAR BOARD'), center('NAMED IN A GOOGLE REVIEW'), blank()];
+    if (!st.length) {
+      r = r.concat(middle([center('NO STARS YET THIS MONTH'), blank(), center('GET NAMED IN A REVIEW'), center('TO EARN THE FIRST ONE')], 3, 10));
+    } else {
+      st.slice(0, 7).forEach(function (x, i) {
+        var row = blank();
+        var c = Number(x.count) || 0;
+        var n = txt(String(c));
+        put(row, 1, txt(x.name, 10));
+        put(row, 12, chips('Y', Math.min(c, 12)));
+        put(row, COLS - 1 - n.length, n);
+        r.push(row);
+      });
+      var total = st.reduce(function (s, x) { return s + (Number(x.count) || 0); }, 0);
+      while (r.length < ROWS - 1) r.push(blank());
+      r = r.slice(0, ROWS - 1);
+      r.push(center(total + (total === 1 ? ' STAR' : ' STARS') + ' THIS MONTH'));
+    }
+    return framed(r);
+  }
+
+  function pickRecent(obj, cycle) {
+    var list = vals(obj).filter(function (x) { return x && x.text; }).sort(function (a, b) { return (b.addedAt || 0) - (a.addedAt || 0); }).slice(0, 12);
+    if (!list.length) return null;
+    return list[cycle % list.length];
+  }
+
+  function quotePanel(cycle) {
+    var q = pickRecent(DATA.quotes, cycle);
+    if (!q) return null;
+    var r = [put(center('FROM A GOOGLE REVIEW'), 0, ['{Y}']), blank()];
+    r[0][COLS - 1] = '{Y}';
+    var lines = fitLines(wrap('"' + q.text + '"', COLS - 2), 7, COLS - 2);
+    r = r.concat(middle(lines.map(center), 2, 8));
+    while (r.length < 10) r.push(blank());
+    r = r.slice(0, 10);
+    r.push(center('SHOUT-OUT TO ' + q.name));
+    var stars = blank(); put(stars, Math.floor((COLS - 5) / 2), chips('Y', 5));
+    r.push(stars);
+    return framed(r);
+  }
+
+  function shoutPanel(cycle) {
+    var s = pickRecent(DATA.shoutouts, cycle);
+    if (!s) return null;
+    var head = center('SHOUT-OUT'); head[0] = '{V}'; head[COLS - 1] = '{V}';
+    var r = [head, blank(), center(s.to), blank()];
+    var lines = fitLines(wrap(s.text, COLS - 2), 5, COLS - 2);
+    r = r.concat(middle(lines.map(center), 4, 9));
+    while (r.length < 10) r.push(blank());
+    r = r.slice(0, 10);
+    r.push(s.from ? center('- ' + s.from) : blank());
+    var foot = edges('V');
+    r.push(foot);
+    return framed(r);
+  }
+
+  function messagePanel() {
+    var m = String(S().message || '').trim();
+    if (!m) return null;
+    var lines = [];
+    m.split(/\n/).forEach(function (para) { lines = lines.concat(para.trim() ? wrap(para, COLS - 2) : ['']); });
+    lines = fitLines(lines, 10, COLS - 2);
+    var r = [edges('B')].concat(middle(lines.map(center), 1, 10));
+    while (r.length < ROWS - 1) r.push(blank());
+    r = r.slice(0, ROWS - 1);
+    r.push(edges('B'));
+    return framed(r);
+  }
+
+  var BIG = {
+    '0': [' ### ', '#   #', '#  ##', '# # #', '##  #', '#   #', ' ### '],
+    '1': ['  #  ', ' ##  ', '  #  ', '  #  ', '  #  ', '  #  ', ' ### '],
+    '2': [' ### ', '#   #', '    #', '   # ', '  #  ', ' #   ', '#####'],
+    '3': ['#####', '   # ', '  #  ', '   # ', '    #', '#   #', ' ### '],
+    '4': ['   # ', '  ## ', ' # # ', '#  # ', '#####', '   # ', '   # '],
+    '5': ['#####', '#    ', '#### ', '    #', '    #', '#   #', ' ### '],
+    '6': ['  ## ', ' #   ', '#    ', '#### ', '#   #', '#   #', ' ### '],
+    '7': ['#####', '    #', '   # ', '  #  ', ' #   ', ' #   ', ' #   '],
+    '8': [' ### ', '#   #', '#   #', ' ### ', '#   #', '#   #', ' ### '],
+    '9': [' ### ', '#   #', '#   #', ' ####', '    #', '   # ', ' ##  ']
+  };
+  function bigNumber(n, color) {
+    var s = String(n), rows = [];
+    var width = s.length * 5 + (s.length - 1);
+    var x0 = Math.floor((COLS - width) / 2);
+    for (var y = 0; y < 7; y++) {
+      var r = blank();
+      for (var k = 0; k < s.length; k++) {
+        var g = BIG[s.charAt(k)][y];
+        for (var x = 0; x < 5; x++) if (g.charAt(x) === '#') r[x0 + k * 6 + x] = '{' + color + '}';
+      }
+      rows.push(r);
+    }
+    return rows;
+  }
+  var MIS_TAGS = ['DOUBLE-CHECK EVERY PULL', 'MATCH THE SKU, NOT THE LOOK', 'READ IT BACK BEFORE YOU BAG', 'CHECK THE LABEL TWICE'];
+  function misPanel(cycle) {
+    var m = misStats();
+    if (!m) return null;
+    var r = [center('DAYS WITHOUT A MISDISPENSE'), blank()];
+    if (m.current > 9999) r = r.concat(middle([center(String(m.current))], 2, 8));
+    else r = r.concat(bigNumber(m.current, m.current === 0 ? 'R' : 'G'));
+    while (r.length < 9) r.push(blank());
+    r = r.slice(0, 9);
+    r.push(blank());
+    if (m.count > 1 && m.current > m.best) r.push(center('NEW RECORD!'));
+    else r.push(center('RECORD: ' + m.record + (m.record === 1 ? ' DAY' : ' DAYS')));
+    r.push(center(MIS_TAGS[cycle % MIS_TAGS.length]));
+    return framed(r);
+  }
+
+  function spotlightPanel(cycle) {
+    var S = DATA.spotlights || {};
+    var list = Object.keys(S).filter(function (k) { return S[k] && S[k].product; })
+      .map(function (k) { return { k: k, v: S[k] }; })
+      .sort(function (a, b) { return byNewest(a.v, b.v); }).slice(0, 10);
+    if (!list.length) return null;
+    var pick = list[cycle % list.length], p = pick.v;
+    var head = center('PRODUCT SPOTLIGHT'); head[0] = '{O}'; head[COLS - 1] = '{O}';
+    if (p.photo) return spotlightPhotoPanel(pick.k, p, head);
+    var r = [head, blank()];
+    fitLines(wrap(p.product, COLS - 2), 2, COLS - 2).forEach(function (l) { r.push(center(l)); });
+    var price = String(p.price || '').trim();
+    if (price && /^[0-9.]+$/.test(price)) price = '$' + price;
+    if (p.brand && price) r.push(lr(p.brand, price));
+    else if (p.brand || price) r.push(center(p.brand || price));
+    r.push(blank());
+    var lines = [];
+    String(p.points || '').split(/\n/).map(function (x) { return x.trim(); }).filter(Boolean).slice(0, 3).forEach(function (pt) {
+      wrap(pt, COLS - 4).forEach(function (l, i) { lines.push((i === 0 ? '- ' : '  ') + l); });
+    });
+    lines.slice(0, Math.max(0, ROWS - 1 - r.length)).forEach(function (l) { r.push(put(blank(), 1, txt(l, COLS - 2))); });
+    while (r.length < ROWS - 1) r.push(blank());
+    r = r.slice(0, ROWS - 1);
+    r.push(center('🌿 RECOMMEND IT TODAY 🌿'));
+    return framed(r);
+  }
+
+  // Spotlight with a product photo: a small photo block on the left under the header,
+  // product / brand / price beside it, talking points full width underneath.
+  function spotlightPhotoPanel(id, p, head) {
+    var BW = 8, BH = 6, PX = 1, PY = 1, r = [head], x, y;
+    for (var i = 1; i < ROWS; i++) r.push(blank());
+    var key = 'spot:' + id;
+    for (y = 0; y < BH; y++) for (x = 0; x < BW; x++) r[PY + y][PX + x] = '\u0001' + key + '|' + x + '|' + y + '|' + BW + '|' + BH;
+    var tc = PX + BW + 1, tw = COLS - tc - 1, L = [];
+    var price = String(p.price || '').trim();
+    if (price && /^[0-9.]+$/.test(price)) price = '$' + price;
+    L = L.concat(fitLines(wrap(p.product, tw), 3, tw));
+    if (p.brand || price) L.push('');
+    if (p.brand) L = L.concat(fitLines(wrap(p.brand, tw), 1, tw));
+    if (price) L.push(price);
+    L = L.slice(0, BH);
+    var start = PY + Math.floor((BH - L.length) / 2);
+    L.forEach(function (s, i) { var c = txt(s, tw); put(r[start + i], tc + Math.floor((tw - c.length) / 2), c); });
+    var lines = [];
+    String(p.points || '').split(/\n/).map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 3).forEach(function (pt) {
+      wrap(pt, COLS - 4).forEach(function (l, i) { lines.push((i === 0 ? '- ' : '  ') + l); });
+    });
+    var top = PY + BH, room = ROWS - 1 - top;
+    lines.slice(0, room).forEach(function (l, i) { put(r[top + i], 1, txt(l, COLS - 2)); });
+    r[ROWS - 1] = center('🌿 RECOMMEND IT TODAY 🌿');
+    return framed(r);
+  }
+
+  function confetti(shift) {
+    var seq = 'RYBGOVYRGBOV', r = [];
+    for (var i = 0; i < COLS; i++) r.push('{' + seq.charAt((i + shift) % seq.length) + '}');
+    return r;
+  }
+  // Photo card: the photo fills the left side, top to bottom (15 x 12 tiles), with the
+  // words on the right. Party cards get confetti above and below the words.
+  function photoCard(key, lines, party) {
+    var BW = 15, BH = ROWS, r = [];
+    for (var i = 0; i < ROWS; i++) r.push(blank());
+    for (var y = 0; y < BH; y++) for (var x = 0; x < BW; x++) r[y][x] = '\u0001' + key + '|' + x + '|' + y + '|' + BW + '|' + BH;
+    var tc = BW + 1, tw = COLS - tc - 1, L = [];
+    lines.forEach(function (s) { if (s) L.push.apply(L, wrap(s, tw)); else L.push(''); });
+    L = L.slice(0, ROWS - 2);
+    var start = Math.max(1, Math.floor((ROWS - L.length) / 2));
+    L.forEach(function (s, i) { var c = txt(s, tw); put(r[start + i], tc + Math.floor((tw - c.length) / 2), c); });
+    if (party) {
+      var top = confetti(0), bot = confetti(5);
+      for (var c = tc; c < COLS; c++) { r[0][c] = top[c]; r[ROWS - 1][c] = bot[c]; }
+    }
+    return r;
+  }
+  function photoCelebrate(ev, cycle, upcoming) {
+    var P = DATA.photos || {};
+    var today = ev.filter(function (e) { return e.days === 0; });
+    var e;
+    if (today.length && !upcoming) {
+      e = today[cycle % today.length];
+      if (!e.key || !P[e.key]) return null;
+      return photoCard(e.key, e.kind === 'bday'
+        ? ['HAPPY', 'BIRTHDAY', '', e.name + '!']
+        : ['HAPPY', e.years + (e.years === 1 ? ' YEAR' : ' YEARS'), 'AT TTA', '', e.name + '!'], true);
+    }
+    var up = ev.filter(function (x) { return x.key && P[x.key] && x.days > 0; });
+    if (!upcoming || !up.length) return null;
+    e = up[cycle % up.length];
+    var when = e.days === 1 ? 'TOMORROW' : shortMD(e.date);
+    return photoCard(e.key, e.kind === 'bday'
+      ? [e.days <= 21 ? 'COMING UP' : 'USQ TEAM', '', e.name, '', 'BIRTHDAY', when]
+      : [e.days <= 21 ? 'COMING UP' : 'USQ TEAM', '', e.name, '', e.years + (e.years === 1 ? ' YEAR' : ' YEARS'), 'AT TTA', when], false);
+  }
+  /* ---------- fun pages: records, Green Wednesday, pet of the month, weather ---------- */
+  var WX = null;
+  // Photo cells name their picture: a team member's key, or "pet:<id>".
+  function photoSrc(key) {
+    if (String(key).indexOf('pet:') === 0) { var pp = (DATA.pets || {})[key.slice(4)]; return pp && pp.photo; }
+    if (String(key).indexOf('bday:') === 0) { var bc = (DATA.bdayCelebs || {})[key.slice(5)]; return bc && bc.photo; }
+    if (String(key).indexOf('spot:') === 0) { var sp = (DATA.spotlights || {})[key.slice(5)]; return sp && sp.photo; }
+    return (DATA.photos || {})[key];
+  }
+
+  // Record board: best day, most orders, best month, from the uploaded days.
+  // Days with under 20 orders (partial or test uploads) don't count.
+  function recordsPanel() {
+    var D = days();
+    var keys = Object.keys(D).filter(function (k) { return (Number(D[k].orders) || 0) >= 20 && (Number(D[k].netSales) || 0) > 0; }).sort();
+    if (!keys.length) return null;
+    var best = keys[0], most = keys[0], months = {};
+    keys.forEach(function (k) {
+      if (+D[k].netSales > +D[best].netSales) best = k;
+      if (+D[k].orders > +D[most].orders) most = k;
+      var m = k.slice(0, 7);
+      months[m] = (months[m] || 0) + (Number(D[k].netSales) || 0);
+    });
+    var bm = Object.keys(months).sort(function (a, b) { return months[b] - months[a]; })[0];
+    var newRec = keys.length >= 3 && latestDay() === best;
+    function sub(s) { return put(blank(), 3, txt(s, COLS - 4)); }
+    return framed([
+      newRec ? confetti(0) : rainbow(),
+      center(newRec ? '🎉 NEW RECORD! 🎉' : '🏆 RECORD BOARD 🏆'),
+      blank(),
+      lr('BEST DAY EVER', money(D[best].netSales)), sub(shortDate(best) + ' ' + best.slice(0, 4)),
+      blank(),
+      lr('MOST ORDERS', String(D[most].orders)), sub(shortDate(most) + ' ' + most.slice(0, 4)),
+      blank(),
+      lr('BEST MONTH', money(months[bm])), sub(monthName(bm + '-01') + ' ' + bm.slice(0, 4)),
+      newRec ? confetti(5) : rainbow()
+    ]);
+  }
+
+  // Green Wednesday: the Wednesday before Thanksgiving (4th Thursday of November).
+  function greenWed(year) {
+    var dow = new Date(year, 10, 1).getDay();
+    var thanks = 1 + ((4 - dow + 7) % 7) + 21;
+    return ymd(new Date(year, 10, thanks - 1));
+  }
+  var BIG = {
+    '0': ['###', '#.#', '#.#', '#.#', '###'], '1': ['.#.', '##.', '.#.', '.#.', '###'],
+    '2': ['###', '..#', '###', '#..', '###'], '3': ['###', '..#', '###', '..#', '###'],
+    '4': ['#.#', '#.#', '###', '..#', '..#'], '5': ['###', '#..', '###', '..#', '###'],
+    '6': ['###', '#..', '###', '#.#', '###'], '7': ['###', '..#', '..#', '..#', '..#'],
+    '8': ['###', '#.#', '###', '#.#', '###'], '9': ['###', '#.#', '###', '..#', '###']
+  };
+  // Big block digits made of color tiles, 3 wide and 5 tall each.
+  function bigNumber(n, code) {
+    var s = String(n), w = s.length * 4 - 1, c0 = Math.floor((COLS - w) / 2), rows = [];
+    for (var y = 0; y < 5; y++) {
+      var r = blank();
+      for (var i = 0; i < s.length; i++) {
+        var g = BIG[s.charAt(i)][y];
+        for (var x = 0; x < 3; x++) if (g.charAt(x) === '#') r[c0 + i * 4 + x] = '{' + code + '}';
+      }
+      rows.push(r);
+    }
+    return rows;
+  }
+  function countdownPanel() {
+    var t = todayStr(), gw = greenWed(+t.slice(0, 4));
+    if (gw < t) gw = greenWed(+t.slice(0, 4) + 1);
+    var n = daysBetween(t, gw);
+    if (n === 0) {
+      return framed([confetti(0), blank(), blank(), center("🌿 IT'S GREEN WEDNESDAY 🌿"), blank(), center('2ND BIGGEST DAY OF THE YEAR'),
+        blank(), center("LET'S GOOOO!"), blank(), blank(), blank(), confetti(5)]);
+    }
+    var G = chips('G', COLS);
+    var r = [G, center('🌿 GREEN WEDNESDAY 🌿'), blank()].concat(bigNumber(n, 'G'));
+    r.push(blank());
+    r.push(center((n === 1 ? 'DAY TO GO - ' : 'DAYS TO GO - ') + shortDate(gw)));
+    r.push(center(n === 1 ? 'TOMORROW! GET READY!' : '2ND BIGGEST DAY OF THE YEAR'));
+    r.push(G);
+    return framed(r);
+  }
+
+  // Birthday celebration: the photo inside a ring of cannabis leaves, with the
+  // message on the right between rows of leaves. Only shows on its date.
+  function bdayCelebsToday() {
+    var B = DATA.bdayCelebs || {}, t = todayStr();
+    return Object.keys(B).filter(function (k) { return B[k] && B[k].photo && B[k].name && B[k].date === t; })
+      .sort(function (a, b) { return (B[a].addedAt || 0) - (B[b].addedAt || 0); });
+  }
+  function bdayTodayPanel(cycle) {
+    var ids = bdayCelebsToday();
+    if (!ids.length) return null;
+    var id = ids[cycle % ids.length], p = DATA.bdayCelebs[id], key = 'bday:' + id;
+    var FW = 15, FH = ROWS, r = [], x, y, i;
+    for (i = 0; i < ROWS; i++) r.push(blank());
+    for (x = 0; x < FW; x++) { r[0][x] = '🌿'; r[FH - 1][x] = '🌿'; }
+    for (y = 1; y < FH - 1; y++) { r[y][0] = '🌿'; r[y][FW - 1] = '🌿'; }
+    var BW = FW - 2, BH = FH - 2;
+    for (y = 0; y < BH; y++) for (x = 0; x < BW; x++) r[y + 1][x + 1] = '\u0001' + key + '|' + x + '|' + y + '|' + BW + '|' + BH;
+    var tc = FW + 1, tw = COLS - tc;
+    for (x = tc - 1; x < COLS; x++) {
+      var on = (x - tc + 1 + cycle) % 2 === 0;
+      r[0][x] = on ? '🌿' : '{G}';
+      r[ROWS - 1][x] = on ? '{G}' : '🌿';
+    }
+    // Fit everything in the 10 rows between the leaf rows; the spacer lines go first if the message is long.
+    var room = ROWS - 2, nameL = fitLines(wrap(p.name, tw), 2, tw);
+    var msg = String(p.msg || '').trim(), msgL = msg ? wrap(msg, tw) : [];
+    var gap1 = 1, gap2 = msgL.length ? 1 : 0;
+    var used = function () { return 2 + gap1 + nameL.length + gap2 + msgL.length; };
+    if (used() > room) gap1 = 0;
+    if (used() > room) gap2 = 0;
+    if (used() > room) msgL = fitLines(msgL, Math.max(1, room - (2 + nameL.length)), tw);
+    var L = ['HAPPY', 'BIRTHDAY'].concat(gap1 ? [''] : [], nameL, gap2 ? [''] : [], msgL);
+    L = L.slice(0, room);
+    var start = 1 + Math.floor((ROWS - 2 - L.length) / 2);
+    L.forEach(function (s, n) { var c = txt(s, tw); put(r[start + n], tc + Math.floor((tw - c.length) / 2), c); });
+    return r;
+  }
+
+  // Pet of the month: the photo in a rainbow tile frame with paw prints in the corners.
+  function petPanel(cycle) {
+    var P = DATA.pets || {};
+    var ids = Object.keys(P).filter(function (k) { return P[k] && P[k].photo && P[k].name; })
+      .sort(function (a, b) { return (P[a].addedAt || 0) - (P[b].addedAt || 0); });
+    if (!ids.length) return null;
+    var id = ids[cycle % ids.length], p = P[id], key = 'pet:' + id;
+    var FW = 15, FH = ROWS, r = [], x, y;
+    for (var i = 0; i < ROWS; i++) r.push(blank());
+    var ring = [];
+    for (x = 0; x < FW; x++) ring.push([0, x]);
+    for (y = 1; y < FH; y++) ring.push([y, FW - 1]);
+    for (x = FW - 2; x >= 0; x--) ring.push([FH - 1, x]);
+    for (y = FH - 2; y >= 1; y--) ring.push([y, 0]);
+    var seq = 'ROYGBV';
+    ring.forEach(function (rc, n) { r[rc[0]][rc[1]] = '{' + seq.charAt((Math.floor(n / 2) + cycle) % seq.length) + '}'; });
+    r[0][0] = r[0][FW - 1] = r[FH - 1][0] = r[FH - 1][FW - 1] = '🐾';
+    var BW = FW - 2, BH = FH - 2;
+    for (y = 0; y < BH; y++) for (x = 0; x < BW; x++) r[y + 1][x + 1] = '\u0001' + key + '|' + x + '|' + y + '|' + BW + '|' + BH;
+    var tc = FW + 1, tw = COLS - tc - 1, L = [];
+    ['🐾 PET OF 🐾', 'THE MONTH', '', p.name].concat(p.owner ? ['', p.owner] : []).forEach(function (s) {
+      if (s) L.push.apply(L, wrap(s, tw)); else L.push('');
+    });
+    L = L.slice(0, ROWS - 2);
+    var start = Math.max(1, Math.floor((ROWS - L.length) / 2));
+    L.forEach(function (s, i) { var c = txt(s, tw); put(r[start + i], tc + Math.floor((tw - c.length) / 2), c); });
+    return r;
+  }
+
+  // Weather for Union Square from Open-Meteo (free, no key). Refreshed every 15 minutes.
+  function wxInfo(code, isDay) {
+    code = Number(code);
+    if (code === 0) return isDay ? ['☀️', 'SUNNY', 'Y'] : ['🌙', 'CLEAR', 'B'];
+    if (code <= 2) return [isDay ? '⛅' : '☁️', 'PARTLY CLOUDY', 'W'];
+    if (code === 3) return ['☁️', 'CLOUDY', 'W'];
+    if (code === 45 || code === 48) return ['🌫️', 'FOGGY', 'W'];
+    if (code >= 51 && code <= 57) return ['🌦️', 'DRIZZLE', 'B'];
+    if ((code >= 61 && code <= 67) || (code >= 80 && code <= 82)) return ['🌧️', 'RAIN', 'B'];
+    if ((code >= 71 && code <= 77) || code === 85 || code === 86) return ['❄️', 'SNOW', 'W'];
+    if (code >= 95) return ['⛈️', 'STORMS', 'V'];
+    return ['🌤️', 'NICE OUT', 'Y'];
+  }
+  function wxVibe(word, t) {
+    if (word === 'RAIN' || word === 'DRIZZLE' || word === 'STORMS') return 'RAINY DAY = EDIBLES DAY 🍬';
+    if (word === 'SNOW') return 'SNOW DAY = COZY DAY ❄️';
+    if (t <= 40) return 'BUNDLE UP, STAY TOASTY 🔥';
+    if (t >= 85) return 'HOT ONE. STAY HYDRATED 💧';
+    if ((word === 'SUNNY' || word === 'CLEAR' || word === 'NICE OUT') && t >= 60) return 'PERFECT PRE-ROLL WEATHER 😎';
+    if (word === 'PARTLY CLOUDY' || word === 'CLOUDY' || word === 'FOGGY') return 'CLOUDY WITH A CHANCE OF 🌿';
+    return 'HAVE A GREAT SHIFT TEAM';
+  }
+  function weatherPanel() {
+    if (!WX || !WX.current || Date.now() - (WX._at || 0) > 3 * 3600 * 1000) return null;
+    var c = WX.current, d = WX.daily || {};
+    var info = wxInfo(c.weather_code, c.is_day);
+    var t = Math.round(c.temperature_2m), fl = Math.round(c.apparent_temperature);
+    var hi = d.temperature_2m_max ? Math.round(d.temperature_2m_max[0]) : null;
+    var lo = d.temperature_2m_min ? Math.round(d.temperature_2m_min[0]) : null;
+    var pr = d.precipitation_probability_max ? d.precipitation_probability_max[0] : null;
+    var bar = chips(info[2], COLS);
+    var r = [bar, center('USQ WEATHER'), blank(), center(info[0] + ' ' + t + '° ' + info[1]), center('FEELS LIKE ' + fl + '°'), blank()];
+    if (hi != null && lo != null) r.push(lr('HIGH / LOW', hi + '° / ' + lo + '°'));
+    if (pr != null) r.push(lr('CHANCE OF RAIN', pr + '%'));
+    while (r.length < 9) r.push(blank());
+    r.push(center(wxVibe(info[1], t)));
+    r.push(blank());
+    r.push(bar);
+    return framed(r);
+  }
+
+  // Its own slot right after the birthday list: one photo card per loop, taking turns
+  // through everyone with a photo (soonest day first), however far off their day is.
+  function celebPhotoPanel(cycle) {
+    var ev = celebrations(366).filter(function (e) {
+      /* anniversaries only when they're coming up soon; otherwise a new hire
+         shows '1 YEAR AT TTA' for a date a whole year away */
+      return e.kind === 'bday' || e.days <= 21;
+    });
+    return ev.length ? photoCelebrate(ev, cycle || 0, true) : null;
+  }
+  function celebratePanel(cycle) {
+    var ev = celebrations(21);
+    if (!ev.length) return null;
+    var pc = photoCelebrate(ev, cycle || 0, false);
+    if (pc) return pc;
+    var today = ev.filter(function (e) { return e.days === 0; });
+    var r;
+    if (today.length) {
+      var lines = [];
+      today.slice(0, 3).forEach(function (e) {
+        lines.push(center(e.kind === 'bday' ? 'HAPPY BIRTHDAY' : 'HAPPY ' + e.years + (e.years === 1 ? ' YEAR' : ' YEARS') + ' AT TTA'));
+        lines.push(center(e.name + '!'));
+        lines.push(blank());
+      });
+      lines.pop();
+      r = [confetti(0), blank()].concat(middle(lines, 2, 9));
+      while (r.length < ROWS - 1) r.push(blank());
+      r = r.slice(0, ROWS - 1);
+      r.push(confetti(5));
+      return framed(r);
+    }
+    r = [center('COMING UP'), center('BIRTHDAYS + ANNIVERSARIES'), blank()];
+    ev.slice(0, 8).forEach(function (e) {
+      var label = txt(e.kind === 'bday' ? 'BIRTHDAY' : e.years + (e.years === 1 ? ' YEAR' : ' YEARS'));
+      var row = blank();
+      put(row, 1, txt(e.days === 1 ? 'TMRW' : shortMD(e.date), 6));
+      put(row, COLS - 1 - label.length, label);
+      put(row, 8, txt(e.name, COLS - 1 - label.length - 1 - 8));
+      r.push(row);
+    });
+    return framed(r);
+  }
+
+  function triviaPick(cycle) {
+    var l = triviaList();
+    if (!l.length) return null;
+    var dn = Math.floor(parseYmd(todayStr()).getTime() / 86400000);
+    return l[(dn * 173 + cycle) % l.length];
+  }
+  function triviaQPanel(cycle) {
+    var t = triviaPick(cycle);
+    if (!t) return null;
+    var head = center('🌿 TRIVIA 🌿'); head[0] = '{B}'; head[COLS - 1] = '{B}';
+    var lines = fitLines(wrap(t.q, COLS - 2), 6, COLS - 2);
+    var r = [head, blank()].concat(middle(lines.map(center), 2, 9));
+    while (r.length < ROWS - 2) r.push(blank());
+    r = r.slice(0, ROWS - 2);
+    r.push(center('ANSWER IN A MINUTE...'));
+    r.push(edges('B'));
+    return framed(r);
+  }
+  function triviaAPanel(cycle) {
+    var t = triviaPick(cycle);
+    if (!t) return null;
+    var head = center('TRIVIA ANSWER'); head[0] = '{G}'; head[COLS - 1] = '{G}';
+    var body = fitLines(wrap(t.q, COLS - 2), 3, COLS - 2).map(center);
+    body.push(blank());
+    fitLines(wrap(t.a, COLS - 4), 5, COLS - 4).forEach(function (l) { var row = center(l); row[0] = '{G}'; body.push(row); });
+    var r = [head, blank()].concat(middle(body, 2, 10));
+    while (r.length < ROWS - 1) r.push(blank());
+    r = r.slice(0, ROWS - 1);
+    r.push(edges('G'));
+    return framed(r);
+  }
+
+  /* ---- extra content (On This Day + NYC facts) ---- */
+  var CONTENT = null, contentLoadedAt = 0, contentLoading = false;
+  function loadContent() {
+    if (contentLoading) return;
+    if (CONTENT && Date.now() - contentLoadedAt < 6 * 3600 * 1000) return;
+    contentLoading = true;
+    firebase.database().ref('sohoBoardContent').once('value').then(function (snap) {
+      CONTENT = snap.val() || {};
+      contentLoadedAt = Date.now();
+      contentLoading = false;
+    }).catch(function () { contentLoading = false; });
+  }
+  loadContent();
+
+  var MONTH_NAMES = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
+  function onThisDayPanel(cycle) {
+    loadContent();
+    if (!CONTENT || !CONTENT.onThisDay) return null;
+    var d = parseYmd(todayStr());
+    var mm = d.getMonth() + 1, dd = d.getDate();
+    var key = (mm < 10 ? '0' : '') + mm + '-' + (dd < 10 ? '0' : '') + dd;
+    var list = CONTENT.onThisDay[key];
+    if (!list) return null;
+    if (!Array.isArray(list)) list = Object.keys(list).map(function (k) { return list[k]; });
+    if (!list.length) return null;
+    var e = list[cycle % list.length];
+    var head = center('ON THIS DAY: ' + MONTH_NAMES[mm - 1] + ' ' + dd);
+    head[0] = '{O}'; head[COLS - 1] = '{O}';
+    var r = [head, blank(), center(String(e.y)), blank()];
+    var lines = fitLines(wrap(e.t, COLS - 2), 6, COLS - 2).map(center);
+    r = r.concat(middle(lines, 4, 10));
+    while (r.length < ROWS - 1) r.push(blank());
+    r = r.slice(0, ROWS - 1);
+    r.push(edges('O'));
+    return framed(r);
+  }
+
+  /* NYC facts never repeat until the whole list has been shown. Position is saved
+     on the TV (localStorage), and each full pass uses a new shuffled order. */
+  var nycFactAt = 0, nycFactText = null, nycFactNum = 0;
+  function nycShuffled(n, seed) {
+    var a = [], i;
+    for (i = 0; i < n; i++) a.push(i);
+    var s = (seed * 2654435761) >>> 0;
+    function rnd() { s = (s + 0x6D2B79F5) >>> 0; var t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }
+    for (i = n - 1; i > 0; i--) { var j = Math.floor(rnd() * (i + 1)); var tmp = a[i]; a[i] = a[j]; a[j] = tmp; }
+    return a;
+  }
+  function nycFactPanel(cycle) {
+    loadContent();
+    if (!CONTENT || !CONTENT.nycFacts) return null;
+    var L = CONTENT.nycFacts;
+    if (!Array.isArray(L)) L = Object.keys(L).map(function (k) { return L[k]; });
+    if (!L.length) return null;
+    var slotMs = Math.max(6, Math.min(90, num(S().rotateSecs, 15))) * 1000;
+    if (!nycFactText || Date.now() - nycFactAt > slotMs) {
+      var n = 0;
+      try { n = parseInt(localStorage.getItem('usqNycFactN') || '0', 10) || 0; } catch (e) { n = Math.floor(Date.now() / 240000); }
+      var pass = Math.floor(n / L.length), pos = n % L.length;
+      nycFactText = L[nycShuffled(L.length, pass + 1)[pos]];
+      nycFactNum = pos + 1;
+      try { localStorage.setItem('usqNycFactN', String(n + 1)); } catch (e) {}
+      nycFactAt = Date.now();
+    }
+    var head = center('NEW YORK FACT #' + nycFactNum);
+    head[0] = '{V}'; head[COLS - 1] = '{V}';
+    var lines = fitLines(wrap(nycFactText, COLS - 2), 8, COLS - 2).map(center);
+    var r = [head, blank()].concat(middle(lines, 2, 10));
+    while (r.length < ROWS - 1) r.push(blank());
+    r = r.slice(0, ROWS - 1);
+    r.push(edges('V'));
+    return framed(r);
+  }
+
+  var ORDER = ['bdayToday', 'welcome', 'weather', 'onthisday', 'home', 'records', 'mis', 'uptDay', 'trivQ', 'stars', 'countdown', 'bdayToday', 'nycfact', 'spotlight', 'atvDay', 'trivA', 'pet', 'quote', 'celebrate', 'celebPhoto', 'attrib', 'bdayToday', 'uptMonth', 'nycfact', 'shout', 'atvMonth', 'bdayToday', 'message'];
+  function build(name, cycle) {
+    if (!panelOn(name)) return null;
+    switch (name) {
+      case 'welcome': return welcomePanel();
+      case 'home': return homePanel();
+      case 'uptDay': return dayLeaders('upt');
+      case 'atvDay': return dayLeaders('atv');
+      case 'uptMonth': return monthLeaders('upt');
+      case 'atvMonth': return monthLeaders('atv');
+      case 'attrib': return attribPanel();
+      case 'stars': return starPanel();
+      case 'quote': return quotePanel(cycle);
+      case 'shout': return shoutPanel(cycle);
+      case 'message': return messagePanel();
+      case 'mis': return misPanel(cycle);
+      case 'spotlight': return spotlightPanel(cycle);
+      case 'celebrate': return celebratePanel(cycle);
+      case 'celebPhoto': return celebPhotoPanel(cycle);
+      case 'records': return recordsPanel();
+      case 'countdown': return countdownPanel();
+      case 'pet': return petPanel(cycle);
+      case 'bdayToday': return bdayTodayPanel(cycle);
+      case 'weather': return weatherPanel();
+      case 'trivQ': return triviaQPanel(cycle);
+      case 'onthisday': return onThisDayPanel(cycle);
+      case 'nycfact': return nycFactPanel(cycle);
+      case 'trivA': return triviaAPanel(cycle);
+    }
+    return null;
+  }
+
+  /* ================= TV mode ================= */
+  function startTV() {
+    var tv = document.getElementById('tv');
+    var boardEl = document.getElementById('board');
+    tv.hidden = false;
+    var STILL = /[?&]still\b/.test(location.search);
+    var CYCLE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    var COLOR_CODES = 'ROYGBVW';
+    var tiles = [], cur = [], tgt = [], anim = [], running = false;
+
+    for (var i = 0; i < ROWS * COLS; i++) {
+      var el = document.createElement('div');
+      el.className = 't';
+      el.appendChild(document.createTextNode(''));
+      boardEl.appendChild(el);
+      tiles.push(el); cur.push(' '); tgt.push(' '); anim.push(null);
+    }
+
+    var TW = 0, TH = 0, TG = 0;
+    function clearPhoto(el) {
+      if (!el._p) return;
+      el._p = false;
+      el.style.backgroundImage = ''; el.style.backgroundSize = ''; el.style.backgroundPosition = '';
+    }
+    // Photo cell: "\u0001key|x|y|blockWidth|blockHeight". The photo is scaled to cover the
+    // whole block of tiles and each tile shows only its own piece.
+    function photoTile(el, cell) {
+      var p = cell.slice(1).split('|');
+      var src = photoSrc(p[0]);
+      el.className = 't p';
+      el.firstChild.nodeValue = '';
+      if (!src) { clearPhoto(el); return; }
+      var cx = +p[1], cy = +p[2], bw = +p[3], bh = +p[4];
+      var blockW = bw * TW + (bw - 1) * TG, blockH = bh * TH + (bh - 1) * TG;
+      var S = Math.max(blockW, blockH), ox = (S - blockW) / 2, oy = (S - blockH) / 2;
+      el.style.backgroundImage = 'url("' + src + '")';
+      el.style.backgroundSize = S + 'px ' + S + 'px';
+      el.style.backgroundPosition = (-(cx * (TW + TG) + ox)) + 'px ' + (-(cy * (TH + TG) + oy)) + 'px';
+      el._p = true;
+    }
+    function sizeBoard() {
+      var vw = window.innerWidth, vh = window.innerHeight;
+      var outer = Math.round(Math.min(vw, vh) * 0.03);
+      var ratio = 0.76, gapR = 0.12;
+      var wByW = (vw - outer * 4) / (COLS + (COLS - 1) * gapR);
+      var wByH = (vh - outer * 4) / (ROWS / ratio + (ROWS - 1) * gapR);
+      var w = Math.max(4, Math.floor(Math.min(wByW, wByH)));
+      var h = Math.floor(w / ratio);
+      var g = Math.max(1, Math.round(w * gapR));
+      boardEl.style.gridTemplateColumns = 'repeat(' + COLS + ', ' + w + 'px)';
+      boardEl.style.gridAutoRows = h + 'px';
+      TW = w; TH = h; TG = g;
+      boardEl.style.gridGap = g + 'px';
+      boardEl.style.padding = outer + 'px';
+      boardEl.style.borderRadius = Math.round(outer * 0.5) + 'px';
+      var fs = Math.round(h * 0.66);
+      var radius = Math.max(1, Math.round(w * 0.07));
+      var seam = Math.max(1, Math.round(h * 0.025));
+      for (var j = 0; j < tiles.length; j++) {
+        var s = tiles[j].style;
+        s.fontSize = fs + 'px';
+        s.lineHeight = h + 'px';
+        s.borderRadius = radius + 'px';
+        s.setProperty('--seam-h', seam + 'px');
+        s.setProperty('--fs', fs + 'px');
+      }
+    }
+    sizeBoard();
+    window.addEventListener('resize', function () {
+      sizeBoard();
+      for (var q = 0; q < tiles.length; q++) if (cur[q].charAt(0) === '\u0001') setTile(q, cur[q], false);
+    });
+
+    function setTile(i, cell, flash) {
+      var el = tiles[i];
+      if (cell.charAt(0) === '\u0001') { photoTile(el, cell); return; }
+      clearPhoto(el);
+      if (cell.charAt(0) === '{') {
+        el.className = 't c' + cell.charAt(1) + (flash ? ' f' : '');
+        el.firstChild.nodeValue = '';
+      } else {
+        // The herb emoji shows as a real cannabis leaf picture instead.
+        var leaf = cell === '🌿';
+        el.className = (flash ? 't f' : 't') + (leaf ? ' leaf' : (/[^\x00-\x7F]/.test(cell) ? ' e' : ''));
+        el.firstChild.nodeValue = (cell === ' ' || leaf) ? '' : cell;
+      }
+    }
+
+    function show(panel) {
+      var changed = [];
+      var now = (window.performance && performance.now) ? performance.now() : Date.now();
+      for (var r = 0; r < ROWS; r++) {
+        for (var c = 0; c < COLS; c++) {
+          var i = r * COLS + c, cell = panel[r][c] || ' ';
+          tgt[i] = cell;
+          if (cur[i] === cell) { if (anim[i]) setTile(i, cell, false); anim[i] = null; continue; }
+          if (STILL) { setTile(i, cell, false); cur[i] = cell; continue; }
+          anim[i] = { at: now + c * 26 + r * 14 + Math.random() * 110, left: 2 + Math.floor(Math.random() * 5) };
+          changed.push(i);
+        }
+      }
+      // Every now and then one or two tiles keep flipping a beat longer, like a real board.
+      if (changed.length && Math.random() < 0.6) {
+        var nLong = Math.random() < 0.4 ? 2 : 1;
+        for (var q = 0; q < nLong; q++) {
+          var li = changed[Math.floor(Math.random() * changed.length)];
+          anim[li].left += 10 + Math.floor(Math.random() * 14);
+        }
+      }
+      if (!STILL && !running) { running = true; requestAnimationFrame(tick); }
+    }
+
+    /* ---------- flap sound ----------
+       Made on the fly with Web Audio (no sound files): each flip is a tiny burst of
+       filtered noise, like a plastic flap snapping down. Browsers won't play sound
+       until someone interacts with the page once, so a remote button press or a
+       click on the TV unlocks it. The admin preview stays silent. */
+    var PREVIEW = /[?&]preview\b/.test(location.search);
+    var AC = null, master = null, noiseBuf = null, lastClick = 0, sndHint = null;
+    function soundWanted() { return !PREVIEW && S().sound !== false; }
+    function initAudio() {
+      if (AC) return AC;
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return null;
+      try {
+        AC = new Ctx();
+        master = AC.createGain();
+        master.connect(AC.destination);
+        var len = Math.floor(AC.sampleRate * 0.04);
+        noiseBuf = AC.createBuffer(1, len, AC.sampleRate);
+        var d = noiseBuf.getChannelData(0);
+        for (var n = 0; n < len; n++) d[n] = (Math.random() * 2 - 1) * Math.pow(1 - n / len, 2);
+      } catch (e) { AC = null; }
+      return AC;
+    }
+    function unlockAudio() {
+      if (!soundWanted()) return;
+      var ac = initAudio();
+      if (ac && ac.state !== 'running' && ac.resume) ac.resume().then(updateHint, updateHint);
+      updateHint();
+    }
+    ['pointerdown', 'touchstart', 'keydown', 'click'].forEach(function (evName) {
+      window.addEventListener(evName, unlockAudio, true);
+    });
+    function updateHint() {
+      var show = soundWanted() && !(AC && AC.state === 'running');
+      if (show && !sndHint) {
+        sndHint = document.createElement('div');
+        sndHint.textContent = 'PRESS ANY BUTTON FOR SOUND';
+        sndHint.style.cssText = 'position:fixed;left:12px;bottom:6px;font:600 11px/1 var(--flap-font, sans-serif);letter-spacing:2px;color:#4A4A4A;pointer-events:none';
+        document.body.appendChild(sndHint);
+      }
+      if (sndHint) sndHint.style.display = show ? '' : 'none';
+    }
+    if (soundWanted()) { initAudio(); if (AC && AC.resume) AC.resume().then(updateHint, updateHint); updateHint(); }
+    function flapSound(flips) {
+      if (!soundWanted()) { updateHint(); return; }
+      if (!AC || AC.state !== 'running') { updateHint(); return; }
+      var vol = Math.max(0.02, Math.min(1, num(S().soundVol, 0.35)));
+      master.gain.value = vol;
+      var t0 = AC.currentTime, n = Math.min(3, flips);
+      for (var k = 0; k < n; k++) {
+        var at = Math.max(t0 + k * 0.006 + Math.random() * 0.01, lastClick + 0.004);
+        lastClick = at;
+        var src = AC.createBufferSource();
+        src.buffer = noiseBuf;
+        src.playbackRate.value = 0.85 + Math.random() * 0.4;
+        var bp = AC.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.frequency.value = 1800 + Math.random() * 1600;
+        bp.Q.value = 1.4;
+        var g = AC.createGain();
+        g.gain.setValueAtTime(0.0001, at);
+        g.gain.exponentialRampToValueAtTime(0.5 + Math.random() * 0.5, at + 0.002);
+        g.gain.exponentialRampToValueAtTime(0.0001, at + 0.035);
+        src.connect(bp); bp.connect(g); g.connect(master);
+        src.start(at); src.stop(at + 0.045);
+      }
+    }
+
+    function tick(now) {
+      var active = false, flips = 0;
+      for (var i = 0; i < anim.length; i++) {
+        var a = anim[i];
+        if (!a) continue;
+        active = true;
+        if (now < a.at) continue;
+        if (a.left > 0) {
+          var t = tgt[i];
+          var rnd = t.charAt(0) === '{'
+            ? '{' + COLOR_CODES.charAt(Math.floor(Math.random() * COLOR_CODES.length)) + '}'
+            : CYCLE_CHARS.charAt(Math.floor(Math.random() * CYCLE_CHARS.length));
+          setTile(i, rnd, a.left % 2 === 1);
+          flips++;
+          a.left--;
+          a.at = now + 62;
+        } else {
+          setTile(i, tgt[i], false);
+          flips++;
+          cur[i] = tgt[i];
+          anim[i] = null;
+        }
+      }
+      if (flips) flapSound(flips);
+      if (active) requestAnimationFrame(tick); else running = false;
+    }
+
+    var idx = 0, cycle = 0, currentName = null, timer = null;
+    function rotateMs() { return Math.max(6, Math.min(90, num(S().rotateSecs, 15))) * 1000; }
+    function next() {
+      if (!loaded) { show(loadingPanel()); schedule(); return; }
+      for (var tries = 0; tries < ORDER.length; tries++) {
+        var name = ORDER[idx];
+        idx = (idx + 1) % ORDER.length;
+        if (idx === 0) cycle++;
+        var p = null;
+        try { p = build(name, cycle); } catch (e) { p = null; }
+        if (p) { currentName = name; show(p); schedule(); return; }
+      }
+      currentName = null;
+      show(idlePanel());
+      schedule();
+    }
+    function schedule() { clearTimeout(timer); timer = setTimeout(next, rotateMs()); }
+    function refreshCurrent() {
+      if (!currentName) { next(); return; }
+      var p = null;
+      try { p = build(currentName, cycle); } catch (e) { p = null; }
+      if (p) show(p); else next();
+    }
+
+    show(loadingPanel());
+
+    function attachData() {
+      rootRef.on('value', function (snap) {
+        DATA = snap.val() || {};
+        var first = !loaded;
+        loaded = true;
+        if (first) next(); else refreshCurrent();
+      }, function () {
+        loaded = true;
+        next();
+      });
+      db.ref('.info/connected').on('value', function (snap) {
+        document.getElementById('dot').className = snap.val() ? 'on' : '';
+      });
+    }
+
+    // Pull in the Firebase library if it didn't load at page open (no internet
+    // yet). Loading it again, rather than reloading the whole page, is what
+    // keeps the TV full screen with no address bar.
+    function loadFirebaseLib() {
+      return new Promise(function (resolve, reject) {
+        if (window.firebase && firebase.database) { resolve(); return; }
+        var urls = [
+          'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js',
+          'https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js'
+        ];
+        var i = 0;
+        (function loadNext() {
+          if (i >= urls.length) {
+            if (window.firebase && firebase.database) resolve();
+            else reject(new Error('firebase unavailable'));
+            return;
+          }
+          var s = document.createElement('script');
+          s.src = urls[i++];
+          s.onload = loadNext;
+          s.onerror = function () { reject(new Error('load failed')); };
+          document.head.appendChild(s);
+        })();
+      });
+    }
+
+    // Connect to the data, and if the internet wasn't up yet, keep trying every
+    // 30 seconds in place. No page reload, so the board stays full screen and
+    // heals itself once Wi-Fi is back.
+    function connectData() {
+      if (rootRef) { attachData(); return; }
+      loadFirebaseLib().then(function () {
+        try {
+          if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(firebaseConfig);
+          db = firebase.database();
+          rootRef = db.ref(ROOT);
+          attachData();
+        } catch (e) { retryConnect(); }
+      }).catch(retryConnect);
+    }
+    function retryConnect() {
+      show(framed([rainbow(), blank(), blank(), blank(), center('TTA USQ'), blank(), center('RECONNECTING...'), blank(), blank(), blank(), blank(), rainbow()]));
+      setTimeout(connectData, 30 * 1000);
+    }
+    connectData();
+
+    function wxRefresh() {
+      if (!window.fetch) return;
+      var url = 'https://api.open-meteo.com/v1/forecast?latitude=40.7359&longitude=-73.9911' +
+        '&current=temperature_2m,apparent_temperature,weather_code,is_day' +
+        '&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
+        '&temperature_unit=fahrenheit&timezone=America%2FNew_York&forecast_days=1';
+      fetch(url).then(function (r) { return r.json(); }).then(function (j) {
+        if (j && j.current) { j._at = Date.now(); WX = j; if (currentName === 'weather') refreshCurrent(); }
+      }).catch(function () { });
+    }
+    wxRefresh();
+    setInterval(wxRefresh, 15 * 60 * 1000);
+
+    function misRefresh() { fetchMis(function () { if (currentName === 'mis') refreshCurrent(); }); }
+    misRefresh();
+    setInterval(misRefresh, 20 * 60 * 1000);
+
+    // Keep the TV awake.
+    keepAwake();
+    // The board updates its numbers live from Firebase on its own, so it never
+    // reloads the page. Reloading would drop the TV browser out of full screen
+    // and bring its address bar back, so we update in place instead.
+  }
+
+  /* ================= keep the screen awake =================
+     Fire TV's browser has a built-in idle sleep with no setting to turn it
+     off, so the page has to keep the screen busy itself. Three layers, since
+     no single one is reliable on Fire OS:
+       1. Screen Wake Lock API, re-acquired whenever the tab becomes visible.
+       2. A 1px muted looping video. Playing video is what Fire TV watches for
+          to decide the screen is in use; this is the part that usually does it.
+       3. A tiny invisible DOM nudge every 30 seconds as a last resort.
+     The wake lock and video only work on a real https:// page, not a file://
+     page opened straight off a USB stick or Downloads. */
+  function keepAwake() {
+    // 1. Wake Lock API
+    var wakeLock = null;
+    function requestLock() {
+      if (!('wakeLock' in navigator)) { return; }
+      navigator.wakeLock.request('screen').then(function (lock) {
+        wakeLock = lock;
+        lock.addEventListener('release', function () { wakeLock = null; });
+      }).catch(function () { /* denied or not allowed on this page; fall through to the video */ });
+    }
+    requestLock();
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible' && !wakeLock) { requestLock(); }
+    });
+
+    // 2. Tiny muted looping video (data URI, no network needed)
+    try {
+      var v = document.createElement('video');
+      v.setAttribute('playsinline', '');
+      v.muted = true; v.loop = true; v.autoplay = true;
+      v.style.cssText = 'position:fixed;width:1px;height:1px;left:0;bottom:0;opacity:0.01;pointer-events:none;z-index:-1';
+      // 1-frame black MP4
+      v.src = 'data:video/mp4;base64,AAAAHGZ0eXBpc29tAAACAGlzb21pc28ybXA0MQAAAAhmcmVlAAAC721kYXQAAAGzABAHAAABthADAowdbb9/AAAC6W1vb3YAAABsbXZoZAAAAAAAAAAAAAAAAAAAA+gAAAAZAAEAAAEAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAhV0cmFrAAAAXHRraGQAAAADAAAAAAAAAAAAAAABAAAAAAAAABkAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAGMbWRpYQAAACBtZGhkAAAAAAAAAAAAAAAAAAB1MAAAC13FHAAAAAAALWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAABL21pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAAO9zdGJsAAAAk3N0c2QAAAAAAAAAAQAAAINhdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAABAAEABIAAAASAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY//8AAAAtYXZjQwFCwBX/4QAWZ0LAFdoYGCGhAAADAAEAAAMAAg8SJZYBAAVo6+ByLAAAABhzdHRzAAAAAAAAAAEAAAABAAALXcAAAAAcc3RzYwAAAAAAAAABAAAAAQAAAAEAAAABAAAAFHN0c3oAAAAAAAABtwAAAAEAAAAUc3RjbwAAAAAAAAABAAAAMAAAAGJ1ZHRhAAAAWm1ldGEAAAAAAAAAIWhkbHIAAAAAAAAAAG1kaXJhcHBsAAAAAAAAAAAAAAAALWlsc3QAAAAlqXRvbwAAAB1kYXRhAAAAAQAAAABMYXZmNTkuMjcuMTAw';
+      var playing = false;
+      function playVideo() { var p = v.play(); if (p && p.catch) { p.then(function(){ playing = true; }).catch(function () { playing = false; }); } }
+      document.body.appendChild(v);
+      playVideo();
+      // Retry the play a few times, since the first autoplay can be blocked
+      // until the page has fully settled.
+      var tries = 0;
+      var vt = setInterval(function () { if (playing || tries++ > 10) { clearInterval(vt); return; } playVideo(); }, 3000);
+    } catch (e) { /* video not supported; the nudge below still runs */ }
+
+    // 3. Invisible DOM nudge every 30 seconds
+    var nudge = document.createElement('div');
+    nudge.setAttribute('aria-hidden', 'true');
+    nudge.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;pointer-events:none';
+    document.body.appendChild(nudge);
+    setInterval(function () { nudge.style.transform = 'translateZ(0) translateX(' + (Date.now() % 2) + 'px)'; }, 30 * 1000);
+  }
+
+  /* ================= Admin mode ================= */
+  function startAdmin() {
+    document.getElementById('admin').hidden = false;
+    document.body.style.background = 'var(--a-bg)';
+    var $ = function (id) { return document.getElementById(id); };
+    var base = location.href.split('#')[0];
+    $('openBoard').href = base;
+
+    var unlocked = false;
+    try { unlocked = sessionStorage.getItem('usqBoardPin') === PIN; } catch (e) { }
+
+    $('gateForm').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      if ($('pinInput').value.trim().toUpperCase() === PIN) {
+        try { sessionStorage.setItem('usqBoardPin', PIN); } catch (e) { }
+        unlock();
+      } else {
+        $('gateMsg').textContent = "That PIN didn't match. Try again.";
+      }
+    });
+    if (unlocked) unlock();
+
+    var toastTimer = null;
+    function toast(text, bad) {
+      var t = $('toast');
+      t.textContent = text;
+      t.className = 'a-toast' + (bad ? ' bad' : '');
+      t.hidden = false;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { t.hidden = true; }, bad ? 7000 : 2800);
+    }
+    function failText(err) {
+      var m = String((err && err.message) || err || '');
+      if (/permission/i.test(m)) return "Couldn't save: the database refused the write. Check the Firebase rules for this project.";
+      return "Couldn't save. Check the connection and try again.";
+    }
+    function counter(inputId, countId, max) {
+      var i = $(inputId), c = $(countId);
+      var f = function () { c.textContent = i.value.length + ' / ' + max; };
+      i.addEventListener('input', f); f();
+    }
+
+    function unlock() {
+      $('gate').hidden = true;
+      $('adminMain').hidden = false;
+      $('preview').src = base + (base.indexOf('?') >= 0 ? '&' : '?') + 'preview&v=' + Date.now();
+      counter('quoteText', 'quoteCount', 220);
+      counter('shoutText', 'shoutCount', 160);
+      counter('msgText', 'msgCount', 200);
+      if (!rootRef) { toast("Couldn't reach the database. Check the internet connection.", true); return; }
+      db.ref('.info/connected').on('value', function (snap) {
+        var on = !!snap.val();
+        $('connState').className = 'a-status' + (on ? ' on' : '');
+        $('connState').textContent = on ? 'Live' : 'Offline';
+      });
+      var firstLoad = true;
+      rootRef.on('value', function (snap) {
+        DATA = snap.val() || {};
+        loaded = true;
+        if (firstLoad) { fillForms(); firstLoad = false; }
+        renderLists();
+      }, function (err) { toast(failText(err), true); });
+    }
+
+    function fillForms() {
+      var s = S();
+      $('dailyGoal').value = s.dailyGoal || '';
+      $('monthlyGoal').value = s.monthlyGoal || '';
+      $('rotateSecs').value = s.rotateSecs || '';
+      $('minDay').value = s.minTxnDay || '';
+      $('minMonth').value = s.minTxnMonth || '';
+      $('exclude').value = s.exclude == null ? DEFAULT_EXCLUDE : s.exclude;
+      $('msgText').value = s.message || '';
+      $('builtinTrivia').checked = s.builtinTrivia !== false;
+      $('flapSound').checked = s.sound !== false;
+      $('soundVol').value = String(s.soundVol || 0.35);
+      $('misReset').value = s.misdispenseReset || '';
+      $('msgText').dispatchEvent(new Event('input'));
+    }
+
+    function renderLists() {
+      var names = rosterNames();
+      $('nameList').innerHTML = names.map(function (n) { return '<option value="' + esc(n) + '"></option>'; }).join('');
+
+      // Stars
+      var mk = todayStr().slice(0, 7);
+      $('starTitle').textContent = 'Star Board · ' + MON[new Date().getMonth()].charAt(0) + MON[new Date().getMonth()].slice(1).toLowerCase();
+      var st = ((DATA.stars || {})[mk]) || {};
+      var rows = names.map(function (n) { var k = safeKey(n); return { name: n, key: k, count: Number((st[k] || {}).count) || 0 }; });
+      rows.sort(function (a, b) { return b.count - a.count || a.name.localeCompare(b.name); });
+      $('starList').innerHTML = rows.length ? rows.map(function (r) {
+        var s = '';
+        for (var i = 0; i < Math.min(r.count, 15); i++) s += '★';
+        return '<div class="a-item"><div class="grow"><div class="name">' + esc(r.name) + '</div><div class="a-stars">' + s + '</div></div>' +
+          '<button class="a-btn icon" type="button" data-star="-1" data-key="' + esc(r.key) + '" data-name="' + esc(r.name) + '" aria-label="Remove a star from ' + esc(r.name) + '">−</button>' +
+          '<span class="a-num">' + r.count + '</span>' +
+          '<button class="a-btn icon primary" type="button" data-star="1" data-key="' + esc(r.key) + '" data-name="' + esc(r.name) + '" aria-label="Add a star for ' + esc(r.name) + '">+</button></div>';
+      }).join('') : '<p class="a-empty">No names yet. Upload a report or add a name below.</p>';
+
+      // Quotes
+      var qs = Object.keys(DATA.quotes || {}).map(function (k) { var q = DATA.quotes[k]; q._k = k; return q; })
+        .sort(function (a, b) { return (b.addedAt || 0) - (a.addedAt || 0); });
+      $('quoteList').innerHTML = qs.length ? qs.map(function (q, i) {
+        return '<div class="a-item"><div class="grow"><div class="name">' + esc(q.name) + (i < 12 ? '' : ' <span class="sub">(not shown, only the newest 12 rotate)</span>') + '</div><div class="sub">"' + esc(q.text) + '"</div></div>' +
+          '<button class="a-btn small danger" type="button" data-del="quotes/' + esc(q._k) + '">Delete</button></div>';
+      }).join('') : '<p class="a-empty">No quotes yet.</p>';
+
+      // Shout-outs
+      var ss = Object.keys(DATA.shoutouts || {}).map(function (k) { var s = DATA.shoutouts[k]; s._k = k; return s; })
+        .sort(function (a, b) { return (b.addedAt || 0) - (a.addedAt || 0); });
+      $('shoutList').innerHTML = ss.length ? ss.map(function (s, i) {
+        return '<div class="a-item"><div class="grow"><div class="name">To ' + esc(s.to) + (s.from ? ' · from ' + esc(s.from) : '') + (i < 12 ? '' : ' <span class="sub">(not shown)</span>') + '</div><div class="sub">' + esc(s.text) + '</div></div>' +
+          '<button class="a-btn small danger" type="button" data-del="shoutouts/' + esc(s._k) + '">Delete</button></div>';
+      }).join('') : '<p class="a-empty">No shout-outs yet.</p>';
+
+      // Spotlights
+      var sp = Object.keys(DATA.spotlights || {}).map(function (k) { var x = DATA.spotlights[k]; x._k = k; return x; }).sort(byNewest);
+      $('spotList').innerHTML = sp.length ? sp.map(function (x, i) {
+        var pts = String(x.points || '').split(/\n/).filter(function (l) { return l.trim(); }).join(' · ');
+        return '<div class="a-item">' + (x.photo ? '<img class="a-thumb" alt="" src="' + esc(x.photo) + '">' : '') +
+          '<div class="grow"><div class="name">' + esc(x.product) + (i < 10 ? '' : ' <span class="sub">(not shown, only the newest 10 rotate)</span>') + '</div><div class="sub">' +
+          esc([x.brand, x.price].filter(Boolean).join(' · ')) + (pts ? '<br>' + esc(pts) : '') + '</div></div>' +
+          '<label class="a-btn small">' + (x.photo ? 'Change photo' : 'Add photo') + '<input type="file" accept="image/*" data-spotphoto="' + esc(x._k) + '" hidden></label>' +
+          (x.photo ? '<button class="a-btn small" type="button" data-spotunphoto="' + esc(x._k) + '">Remove photo</button>' : '') +
+          '<button class="a-btn small" type="button" data-spotedit="' + esc(x._k) + '">Edit</button>' +
+          '<button class="a-btn small danger" type="button" data-del="spotlights/' + esc(x._k) + '">Delete</button></div>';
+      }).join('') : '<p class="a-empty">No spotlight yet.</p>';
+
+      // Team birthdays and anniversaries
+      var tm = Object.keys(DATA.team || {}).map(function (k) { var x = DATA.team[k]; x._k = k; return x; })
+        .sort(function (a, b) { return String(a.name).localeCompare(String(b.name)); });
+      // Birthday celebrations (newest date first)
+      var bcs = Object.keys(DATA.bdayCelebs || {}).map(function (k) { var x = DATA.bdayCelebs[k]; x._k = k; return x; })
+        .sort(function (a, b) { return String(b.date || '').localeCompare(String(a.date || '')); });
+      var tdy = todayStr();
+      $('bdcList').innerHTML = bcs.length ? bcs.map(function (x) {
+        var when = x.date === tdy ? 'Today, showing now' : (String(x.date) < tdy ? x.date + ' (past)' : x.date);
+        return '<div class="a-item">' + (x.photo ? '<img class="a-thumb" alt="" src="' + esc(x.photo) + '">' : '') +
+          '<div class="grow"><div class="name">' + esc(x.name) + '</div><div class="sub">' + esc(when) + (x.msg ? '<br>' + esc(x.msg) : '') + '</div></div>' +
+          '<button class="a-btn small" type="button" data-bdcedit="' + esc(x._k) + '">Edit</button>' +
+          '<button class="a-btn small danger" type="button" data-del="bdayCelebs/' + esc(x._k) + '">Delete</button></div>';
+      }).join('') : '<p class="a-empty">No birthday celebrations yet.</p>';
+
+      // Pets
+      var pets = Object.keys(DATA.pets || {}).map(function (k) { var x = DATA.pets[k]; x._k = k; return x; })
+        .sort(function (a, b) { return (a.addedAt || 0) - (b.addedAt || 0); });
+      $('petList').innerHTML = pets.length ? pets.map(function (x) {
+        return '<div class="a-item">' + (x.photo ? '<img class="a-thumb" alt="" src="' + esc(x.photo) + '">' : '') +
+          '<div class="grow"><div class="name">' + esc(x.name) + '</div><div class="sub">' + esc(x.owner || '') + '</div></div>' +
+          '<button class="a-btn small danger" type="button" data-del="pets/' + esc(x._k) + '">Delete</button></div>';
+      }).join('') : '<p class="a-empty">No pets yet.</p>';
+
+      // Drop photos whose person was deleted.
+      Object.keys(DATA.photos || {}).forEach(function (pk) { if (!(DATA.team || {})[pk]) rootRef.child('photos/' + pk).remove(); });
+      $('teamList').innerHTML = tm.length ? tm.map(function (x) {
+        var bits = [];
+        if (x.bday) { var mm = +x.bday.slice(0, 2), dd = +x.bday.slice(3, 5); bits.push('Birthday ' + MON[mm - 1].charAt(0) + MON[mm - 1].slice(1, 3).toLowerCase() + ' ' + dd); }
+        if (x.start) bits.push('Started ' + x.start);
+        var ph = (DATA.photos || {})[x._k];
+        return '<div class="a-item">' + (ph ? '<img class="a-thumb" alt="" src="' + esc(ph) + '">' : '') + '<div class="grow"><div class="name">' + esc(x.name) + '</div><div class="sub">' + esc(bits.join(' · ')) + '</div></div>' +
+          '<label class="a-btn small">' + (ph ? 'Change photo' : 'Add photo') + '<input type="file" accept="image/*" data-photo="' + esc(x._k) + '" hidden></label>' +
+          (ph ? '<button class="a-btn small" type="button" data-unphoto="' + esc(x._k) + '">Remove photo</button>' : '') +
+          '<button class="a-btn small danger" type="button" data-del="team/' + esc(x._k) + '">Delete</button></div>';
+      }).join('') : '<p class="a-empty">Nobody added yet.</p>';
+
+      // Trivia
+      var tv = Object.keys(DATA.trivia || {}).map(function (k) { var x = DATA.trivia[k]; x._k = k; return x; }).sort(byNewest);
+      $('triviaList').innerHTML = tv.length ? tv.map(function (x) {
+        return '<div class="a-item"><div class="grow"><div class="name">' + esc(x.q) + '</div><div class="sub">' + esc(x.a) + '</div></div>' +
+          '<button class="a-btn small danger" type="button" data-del="trivia/' + esc(x._k) + '">Delete</button></div>';
+      }).join('') : '<p class="a-empty">No questions of your own yet' + (S().builtinTrivia === false ? '.' : '. The built-in ones are running.') + '</p>';
+
+      renderMisInfo();
+      renderAttrib();
+
+      // Page toggles
+      $('panelToggles').innerHTML = PANELS.map(function (pp) {
+        var on = panelOn(pp[0]);
+        return '<label class="a-toggle' + (on ? '' : ' off') + '"><input type="checkbox" data-panel="' + pp[0] + '"' + (on ? ' checked' : '') + '>' + esc(pp[1]) + '</label>';
+      }).join('');
+
+      // Days
+      var dk = Object.keys(days()).sort().reverse();
+      $('dayList').innerHTML = dk.length ? '<table class="a-table"><thead><tr><th>Day</th><th class="r">Net sales</th><th class="r">Orders</th><th class="r">Budtenders</th><th></th></tr></thead><tbody>' +
+        dk.slice(0, 62).map(function (k) {
+          var d = days()[k];
+          return '<tr><td>' + esc(shortDate(k)) + '</td><td class="r">' + money(d.netSales || 0) + '</td><td class="r">' + (d.orders || 0) + '</td><td class="r">' + Object.keys(d.budtenders || {}).length + '</td>' +
+            '<td class="r"><button class="a-btn small danger" type="button" data-del="days/' + esc(k) + '" data-what="' + esc(shortDate(k)) + '">Delete</button></td></tr>';
+        }).join('') + '</tbody></table>' : '<p class="a-empty">Nothing uploaded yet.</p>';
+    }
+
+    // Star buttons and deletes
+    document.addEventListener('click', function (ev) {
+      var b = ev.target.closest ? ev.target.closest('button') : null;
+      if (!b || !rootRef) return;
+      if (b.dataset.star) {
+        var mk = todayStr().slice(0, 7);
+        var delta = Number(b.dataset.star);
+        var ref = rootRef.child('stars/' + mk + '/' + b.dataset.key);
+        var name = b.dataset.name;
+        ref.transaction(function (cur) {
+          cur = cur || { name: name, count: 0 };
+          cur.name = name;
+          cur.count = Math.max(0, (Number(cur.count) || 0) + delta);
+          return cur;
+        }).catch(function (err) { toast(failText(err), true); });
+      } else if (b.dataset.del) {
+        var what = b.dataset.what ? b.dataset.what + "'s sales" : 'this';
+        if (!confirm('Delete ' + what + '? This can\'t be undone.')) return;
+        rootRef.child(b.dataset.del).remove().then(function () { toast('Deleted.'); }).catch(function (err) { toast(failText(err), true); });
+      }
+    });
+
+    $('addNameForm').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var n = $('newName').value.trim();
+      if (!n) return;
+      rootRef.child('roster/' + safeKey(n)).set({ name: n }).then(function () { $('newName').value = ''; toast('Added ' + n + '.'); })
+        .catch(function (err) { toast(failText(err), true); });
+    });
+
+    $('goalForm').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      rootRef.child('settings').update({
+        dailyGoal: Number($('dailyGoal').value) || 0,
+        monthlyGoal: Number($('monthlyGoal').value) || 0
+      }).then(function () { toast('Goals saved.'); }).catch(function (err) { toast(failText(err), true); });
+    });
+
+    $('settingsForm').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      rootRef.child('settings').update({
+        rotateSecs: Number($('rotateSecs').value) || 0,
+        minTxnDay: Number($('minDay').value) || 0,
+        minTxnMonth: Number($('minMonth').value) || 0,
+        exclude: $('exclude').value.trim(),
+        sound: $('flapSound').checked,
+        soundVol: Number($('soundVol').value) || 0.35
+      }).then(function () { toast('Settings saved.'); }).catch(function (err) { toast(failText(err), true); });
+    });
+
+    $('quoteForm').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var name = $('quoteName').value.trim(), text = $('quoteText').value.trim();
+      if (!name || !text) return;
+      rootRef.child('quotes').push({ name: name, text: text, addedAt: Date.now() }).then(function () {
+        $('quoteText').value = ''; $('quoteName').value = ''; $('quoteText').dispatchEvent(new Event('input'));
+        toast('Quote added.');
+      }).catch(function (err) { toast(failText(err), true); });
+    });
+
+    $('shoutForm').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var to = $('shoutTo').value.trim(), from = $('shoutFrom').value.trim(), text = $('shoutText').value.trim();
+      if (!to || !text) return;
+      rootRef.child('shoutouts').push({ to: to, from: from, text: text, addedAt: Date.now() }).then(function () {
+        $('shoutText').value = ''; $('shoutTo').value = ''; $('shoutText').dispatchEvent(new Event('input'));
+        toast('Shout-out posted.');
+      }).catch(function (err) { toast(failText(err), true); });
+    });
+
+    $('msgSave').addEventListener('click', function () {
+      rootRef.child('settings/message').set($('msgText').value.trim()).then(function () { toast('Message saved.'); })
+        .catch(function (err) { toast(failText(err), true); });
+    });
+    function renderAttrib() {
+      var mk = attribMonth();
+      $('attrTitle').textContent = 'Kiosk sales / attributions' + (mk ? ' · ' + MON[+mk.slice(5, 7) - 1].charAt(0) + MON[+mk.slice(5, 7) - 1].slice(1).toLowerCase() : '');
+      if (!mk) {
+        $('attrSummary').innerHTML = '<p class="a-empty">No attributions yet. Choose the attribution export with the Dutchie report above.</p>';
+        $('attrReview').innerHTML = ''; $('attrNone').innerHTML = '';
+        return;
+      }
+      var stats = attribStats(mk), terms = excludeTerms();
+      $('attrSummary').innerHTML = '<div class="a-table-wrap"><table class="a-table"><thead><tr><th>Budtender</th><th class="r">Logged</th><th class="r">Credited</th><th class="r">Rate</th><th class="r">Net sales</th></tr></thead><tbody>' +
+        stats.map(function (a) {
+          var hidden = isExcluded(a.name, terms);
+          return '<tr><td>' + esc(a.name) + (hidden ? ' <span style="color:var(--a-muted)">(off the TV)</span>' : '') + '</td><td class="r">' + a.logged + '</td><td class="r">' + a.credited +
+            (a.review ? ' <span style="color:var(--a-muted)">+' + a.review + '?</span>' : '') + '</td><td class="r">' + Math.round(100 * a.credited / Math.max(1, a.logged)) + '%</td><td class="r">' + money(a.net) + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+
+      var rev = [], none = [];
+      attribDays(mk).slice().reverse().forEach(function (d) {
+        var list = ((DATA.attrib || {})[d] || {}).list || {};
+        Object.keys(list).sort().forEach(function (id) {
+          var e = list[id]; if (!e) return;
+          var item = { d: d, id: id, e: e };
+          if (e.st === 'review' || e.st === 'ok' || e.st === 'no') rev.push(item);
+          else if (e.st === 'none') none.push(item);
+        });
+      });
+      var h = '<h3 style="font-size:15px;margin:18px 0 8px">Needs a look</h3>';
+      h += rev.length ? '<div class="a-list">' + rev.map(function (x) {
+        var e = x.e, key = esc(x.d + '|' + x.id);
+        var btns = e.st === 'review'
+          ? '<button class="a-btn small primary" type="button" data-attr="' + key + '|ok">Count it</button><button class="a-btn small" type="button" data-attr="' + key + '|no">Don\'t count</button>'
+          : '<span class="sub" style="color:var(--a-muted)">' + (e.st === 'ok' ? 'Counted' : 'Not counted') + '</span><button class="a-btn small" type="button" data-attr="' + key + '|review">Undo</button>';
+        return '<div class="a-item" style="flex-wrap:wrap"><div class="grow"><div class="name">' + esc(e.c) + ' · ' + esc(e.by) + '</div><div class="sub">Logged ' + esc(shortDate(x.d)) + ' ' + esc(e.t) +
+          '. Possible sale: ' + esc(e.oc || '') + ' at ' + esc(e.ot || '') + ', rung by ' + esc(e.sold || '?') + ', ' + money(e.net || 0) + '.</div></div>' + btns + '</div>';
+      }).join('') + '</div>' : '<p class="a-empty">Nothing to review.</p>';
+      $('attrReview').innerHTML = h;
+      $('attrNone').innerHTML = none.length ? '<details style="margin-top:14px"><summary class="a-hint" style="cursor:pointer">No sale found (' + none.length + ')</summary><div class="a-list" style="margin-top:8px">' +
+        none.map(function (x) {
+          return '<div class="a-item"><div class="grow"><div class="name">' + esc(x.e.c) + ' · ' + esc(x.e.by) + '</div><div class="sub">Logged ' + esc(shortDate(x.d)) + ' ' + esc(x.e.t) + '</div></div></div>';
+        }).join('') + '</div></details>' : '';
+    }
+    document.addEventListener('click', function (ev) {
+      var b = ev.target.closest ? ev.target.closest('button[data-attr]') : null;
+      if (!b || !rootRef) return;
+      var p = b.dataset.attr.split('|');
+      rootRef.child('attrib/' + p[0] + '/list/' + p[1] + '/st').set(p[2]).then(function () {
+        toast(p[2] === 'ok' ? 'Counted.' : p[2] === 'no' ? 'Not counted.' : 'Back in review.');
+      }).catch(function (err) { toast(failText(err), true); });
+    });
+
+    function renderMisInfo() {
+      var el = $('misInfo');
+      if (!MIS.loaded && !MIS.error) { el.textContent = 'Checking the misdispense log…'; return; }
+      var m = misStats();
+      var parts = [];
+      if (MIS.error) parts.push("Couldn't reach the misdispense log right now.");
+      if (m) parts.push('Last misdispense: ' + shortDate(m.last) + ' (' + m.current + (m.current === 1 ? ' day' : ' days') + ' ago). Record: ' + m.record + (m.record === 1 ? ' day.' : ' days.'));
+      else if (!MIS.error) parts.push('No misdispenses logged yet. The panel shows up after the first one, or set a date below.');
+      el.textContent = parts.join(' ');
+    }
+    fetchMis(renderMisInfo);
+
+    $('misResetSave').addEventListener('click', function () {
+      var v = $('misReset').value;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) { toast('Pick a date first.', true); return; }
+      rootRef.child('settings/misdispenseReset').set(v).then(function () { toast('Counter date saved.'); }).catch(function (err) { toast(failText(err), true); });
+    });
+    $('misResetClear').addEventListener('click', function () {
+      $('misReset').value = '';
+      rootRef.child('settings/misdispenseReset').remove().then(function () { toast('Manual date cleared.'); }).catch(function (err) { toast(failText(err), true); });
+    });
+
+    $('spotForm').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var product = $('spotProduct').value.trim();
+      if (!product) return;
+      var rec = {
+        product: product, brand: $('spotBrand').value.trim(), price: $('spotPrice').value.trim(),
+        points: $('spotPoints').value.split(/\n/).map(function (l) { return l.trim(); }).filter(Boolean).slice(0, 3).join('\n')
+      };
+      var editKey = spotEditKey;
+      function saveSpot(photo) {
+        if (photo) rec.photo = photo;
+        var done = editKey && (DATA.spotlights || {})[editKey]
+          ? rootRef.child('spotlights/' + editKey).update(rec)
+          : (rec.addedAt = Date.now(), rootRef.child('spotlights').push(rec));
+        return done.then(function () {
+          resetSpotForm();
+          toast(editKey ? 'Spotlight updated.' : 'Spotlight added.');
+        });
+      }
+      var f = $('spotPhoto').files && $('spotPhoto').files[0];
+      if (f) openCropper('spot', f, spotCropOpts(product, saveSpot));
+      else saveSpot().catch(function (err) { toast(failText(err), true); });
+    });
+    // Editing: Edit fills the form with that spotlight; saving updates it in place
+    // (keeps its photo and its spot in the rotation unless a new photo is picked).
+    var spotEditKey = null;
+    function resetSpotForm() {
+      spotEditKey = null;
+      ['spotProduct', 'spotBrand', 'spotPrice', 'spotPoints', 'spotPhoto'].forEach(function (id) { $(id).value = ''; });
+      $('spotSubmit').textContent = 'Add spotlight';
+      $('spotCancel').hidden = true;
+    }
+    $('spotCancel').addEventListener('click', resetSpotForm);
+    $('spotList').addEventListener('click', function (ev) {
+      var b = ev.target.closest && ev.target.closest('[data-spotedit]');
+      if (!b) return;
+      var k = b.getAttribute('data-spotedit'), x = (DATA.spotlights || {})[k];
+      if (!x) return;
+      spotEditKey = k;
+      $('spotProduct').value = x.product || '';
+      $('spotBrand').value = x.brand || '';
+      $('spotPrice').value = x.price || '';
+      $('spotPoints').value = x.points || '';
+      $('spotPhoto').value = '';
+      $('spotSubmit').textContent = 'Save changes';
+      $('spotCancel').hidden = false;
+      $('spotForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      $('spotProduct').focus({ preventScroll: true });
+    });
+    // Product photos: whole product fits by default (zoom out allowed), small block on the board.
+    function spotCropOpts(product, save) {
+      return { who: product, boxId: 'spotCrop', grid: [8, 6], fit: true, save: save,
+        hint: 'Drag and zoom so the product fills the square. The lines show the board tiles.' };
+    }
+    $('spotList').addEventListener('change', function (ev) {
+      var inp = ev.target, k = inp.getAttribute && inp.getAttribute('data-spotphoto');
+      if (!k || !inp.files || !inp.files[0]) return;
+      var file = inp.files[0], sp = (DATA.spotlights || {})[k] || {};
+      inp.value = '';
+      openCropper('spot', file, spotCropOpts(sp.product || 'the product', function (data) {
+        return rootRef.child('spotlights/' + k + '/photo').set(data);
+      }));
+    });
+    $('spotList').addEventListener('click', function (ev) {
+      var b = ev.target.closest && ev.target.closest('[data-spotunphoto]');
+      if (!b) return;
+      rootRef.child('spotlights/' + b.getAttribute('data-spotunphoto') + '/photo').remove()
+        .then(function () { toast('Photo removed.'); })
+        .catch(function (err) { toast(failText(err), true); });
+    });
+
+    (function buildBdaySelects() {
+      var ms = '<option value="">Month</option>';
+      for (var i = 0; i < 12; i++) ms += '<option value="' + pad2(i + 1) + '">' + MON[i].charAt(0) + MON[i].slice(1).toLowerCase() + '</option>';
+      var ds = '<option value="">Day</option>';
+      for (var d = 1; d <= 31; d++) ds += '<option value="' + pad2(d) + '">' + d + '</option>';
+      $('bdayMonth').innerHTML = ms;
+      $('bdayDay').innerHTML = ds;
+    })();
+    $('teamForm').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var name = $('teamName').value.trim();
+      var mm = $('bdayMonth').value, dd = $('bdayDay').value, start = $('teamStart').value;
+      if (!name) return;
+      if ((mm && !dd) || (!mm && dd)) { toast('Pick both a month and a day for the birthday.', true); return; }
+      if (!mm && !start) { toast('Add a birthday, a start date, or both.', true); return; }
+      rootRef.child('team/' + safeKey(name)).set({ name: name, bday: mm ? mm + '-' + dd : '', start: start || '' }).then(function () {
+        $('teamName').value = ''; $('bdayMonth').value = ''; $('bdayDay').value = ''; $('teamStart').value = '';
+        toast('Saved ' + name + '.');
+      }).catch(function (err) { toast(failText(err), true); });
+    });
+
+    // Team photos: cropped square, shrunk to 320px and saved with the board data.
+    function photoToDataUrl(file) {
+      return new Promise(function (resolve, reject) {
+        var url = URL.createObjectURL(file), img = new Image();
+        img.onload = function () {
+          var S = 320, c = document.createElement('canvas');
+          c.width = S; c.height = S;
+          var w = img.naturalWidth, h = img.naturalHeight, m = Math.min(w, h);
+          var sx = (w - m) / 2, sy = (h - m) / 2 * 0.6;
+          c.getContext('2d').drawImage(img, sx, sy, m, m, 0, 0, S, S);
+          URL.revokeObjectURL(url);
+          resolve(c.toDataURL('image/jpeg', 0.82));
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); reject(new Error("Couldn't read that photo. Try a JPG or PNG.")); };
+        img.src = url;
+      });
+    }
+    $('teamList').addEventListener('change', function (ev) {
+      var inp = ev.target, k = inp.getAttribute && inp.getAttribute('data-photo');
+      if (!k || !inp.files || !inp.files[0]) return;
+      var file = inp.files[0];
+      inp.value = '';
+      toast('Saving photo…');
+      openCropper(k, file);
+    });
+    // Crop step: drag to move, slider to zoom, so the face fills the square the board shows.
+    function openCropper(k, file, opts) {
+      opts = opts || {};
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        ['photoCrop', 'petCrop', 'spotCrop', 'bdcCrop'].forEach(function (id) { var ob = $(id); if (ob) ob.innerHTML = ''; });
+        var box = $(opts.boxId || 'photoCrop');
+        if (!box) { box = document.createElement('div'); box.id = 'photoCrop'; $('teamList').insertAdjacentElement('afterend', box); }
+        var who = opts.who || ((DATA.team || {})[k] || {}).name || 'their';
+        var GX = (opts.grid || [15, 12])[0], GY = (opts.grid || [15, 12])[1];
+        var hint = opts.hint ? esc(opts.hint) : 'Drag the photo and zoom in so ' + esc(who) + "'s face fills most of the square. The lines show the board's tiles.";
+        var minZ = opts.fit ? Math.min(img.naturalWidth, img.naturalHeight) / Math.max(img.naturalWidth, img.naturalHeight) : 1;
+        box.innerHTML = '<div class="a-crop"><p class="a-hint" style="margin:0">' + hint + '</p>' +
+          '<canvas id="cropCv" width="560" height="560"></canvas>' +
+          '<label for="cropZoom" class="a-hint" style="margin:0">Zoom</label><input id="cropZoom" type="range" min="' + minZ + '" max="6" step="0.01" value="' + minZ + '">' +
+          '<div class="a-row"><button class="a-btn primary" type="button" id="cropSave">Save photo</button><button class="a-btn" type="button" id="cropCancel">Cancel</button></div></div>';
+        box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        var cv = $('cropCv'), V = cv.width, W = img.naturalWidth, H = img.naturalHeight;
+        var base = Math.max(V / W, V / H), zoom = minZ, cx = W / 2, cy = opts.fit ? H / 2 : H * 0.4, drag = null;
+        // Fit mode: fill the empty edges with the photo's own corner color (usually white).
+        var bg = '#000';
+        if (opts.fit) {
+          try {
+            var sc0 = document.createElement('canvas'); sc0.width = sc0.height = 1;
+            var g0 = sc0.getContext('2d'); g0.drawImage(img, 0, 0, Math.max(1, W * 0.02), Math.max(1, H * 0.02), 0, 0, 1, 1);
+            var px = g0.getImageData(0, 0, 1, 1).data; bg = 'rgb(' + px[0] + ',' + px[1] + ',' + px[2] + ')';
+          } catch (e) { bg = '#fff'; }
+        }
+        function clamp() {
+          var half = V / 2 / (base * zoom);
+          cx = W / 2 <= half ? W / 2 : Math.min(Math.max(cx, half), W - half);
+          cy = H / 2 <= half ? H / 2 : Math.min(Math.max(cy, half), H - half);
+        }
+        function paint(c, size) {
+          var g = c.getContext('2d'), sc = base * zoom * size / V;
+          g.fillStyle = bg; g.fillRect(0, 0, size, size);
+          try { g.filter = 'brightness(1.06) contrast(1.08) saturate(1.1)'; } catch (e) { }
+          g.drawImage(img, size / 2 - cx * sc, size / 2 - cy * sc, W * sc, H * sc);
+          try { g.filter = 'none'; } catch (e) { }
+        }
+        function render() {
+          clamp(); paint(cv, V);
+          var g = cv.getContext('2d');
+          g.strokeStyle = 'rgba(0,0,0,0.45)'; g.lineWidth = 2;
+          for (var i = 1; i < GX; i++) { var x = Math.round(i * V / GX); g.beginPath(); g.moveTo(x, 0); g.lineTo(x, V); g.stroke(); }
+          for (var j = 1; j < GY; j++) { var y = Math.round(j * V / GY); g.beginPath(); g.moveTo(0, y); g.lineTo(V, y); g.stroke(); }
+        }
+        render();
+        cv.addEventListener('pointerdown', function (e) { drag = { x: e.clientX, y: e.clientY, cx: cx, cy: cy }; try { cv.setPointerCapture(e.pointerId); } catch (er) { } });
+        cv.addEventListener('pointermove', function (e) {
+          if (!drag) return;
+          var k2 = V / cv.clientWidth / (base * zoom);
+          cx = drag.cx - (e.clientX - drag.x) * k2;
+          cy = drag.cy - (e.clientY - drag.y) * k2;
+          render();
+        });
+        function endDrag() { drag = null; }
+        cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
+        cv.addEventListener('wheel', function (e) {
+          e.preventDefault();
+          zoom = Math.min(6, Math.max(minZ, zoom * (e.deltaY < 0 ? 1.08 : 1 / 1.08)));
+          $('cropZoom').value = zoom; render();
+        }, { passive: false });
+        $('cropZoom').addEventListener('input', function () { zoom = +this.value; render(); });
+        function close() { box.innerHTML = ''; URL.revokeObjectURL(url); }
+        $('cropCancel').addEventListener('click', close);
+        $('cropSave').addEventListener('click', function () {
+          var out = document.createElement('canvas'); out.width = out.height = 480;
+          clamp(); paint(out, 480);
+          var data = out.toDataURL('image/jpeg', 0.85);
+          toast('Saving photo…');
+          (opts.save ? opts.save(data) : rootRef.child('photos/' + k).set(data)).then(function () { toast('Photo saved.'); close(); })
+            .catch(function (err) { toast(failText(err), true); });
+        });
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); toast("Couldn't read that photo. Try a JPG or PNG.", true); };
+      img.src = url;
+    }
+    $('teamList').addEventListener('click', function (ev) {
+      var b = ev.target.closest && ev.target.closest('[data-unphoto]');
+      if (!b) return;
+      rootRef.child('photos/' + b.getAttribute('data-unphoto')).remove()
+        .then(function () { toast('Photo removed.'); })
+        .catch(function (err) { toast(failText(err), true); });
+    });
+
+    $('bdcDate').value = todayStr();
+    $('bdcForm').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var name = $('bdcName').value.trim(), date = $('bdcDate').value, msg = $('bdcMsg').value.trim();
+      var f = $('bdcPhoto').files && $('bdcPhoto').files[0];
+      var editKey = bdcEditKey && (DATA.bdayCelebs || {})[bdcEditKey] ? bdcEditKey : null;
+      if (!name || !date || (!f && !editKey)) { toast('Add a name, date and photo.', true); return; }
+      var rec = { name: name, date: date, msg: msg };
+      function saveBdc(photo) {
+        if (photo) rec.photo = photo;
+        var done = editKey ? rootRef.child('bdayCelebs/' + editKey).update(rec)
+          : (rec.addedAt = Date.now(), rootRef.child('bdayCelebs').push(rec));
+        return done.then(function () { resetBdcForm(); toast(editKey ? 'Birthday updated.' : 'Birthday saved.'); });
+      }
+      if (f) openCropper('bday', f, { who: name, boxId: 'bdcCrop', grid: [13, 10], save: saveBdc });
+      else saveBdc().catch(function (err) { toast(failText(err), true); });
+    });
+    // Editing: Edit loads it into the form; saving updates it in place. Pick a photo only to replace it.
+    var bdcEditKey = null;
+    function resetBdcForm() {
+      bdcEditKey = null;
+      $('bdcName').value = ''; $('bdcMsg').value = ''; $('bdcPhoto').value = ''; $('bdcDate').value = todayStr();
+      $('bdcSubmit').textContent = 'Next: crop the photo';
+      $('bdcCancel').hidden = true;
+    }
+    $('bdcCancel').addEventListener('click', resetBdcForm);
+    $('bdcList').addEventListener('click', function (ev) {
+      var b = ev.target.closest && ev.target.closest('[data-bdcedit]');
+      if (!b) return;
+      var k = b.getAttribute('data-bdcedit'), x = (DATA.bdayCelebs || {})[k];
+      if (!x) return;
+      bdcEditKey = k;
+      $('bdcName').value = x.name || ''; $('bdcDate').value = x.date || todayStr(); $('bdcMsg').value = x.msg || ''; $('bdcPhoto').value = '';
+      $('bdcSubmit').textContent = 'Save changes';
+      $('bdcCancel').hidden = false;
+      $('bdcForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    $('bdcPhoto').addEventListener('change', function () {
+      if (bdcEditKey) $('bdcSubmit').textContent = this.files && this.files[0] ? 'Next: crop the new photo' : 'Save changes';
+    });
+
+    $('petForm').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var name = $('petName').value.trim(), owner = $('petOwner').value.trim();
+      var f = $('petPhoto').files && $('petPhoto').files[0];
+      if (!name || !f) { toast("Add the pet's name and a photo.", true); return; }
+      openCropper('pet', f, { who: name, boxId: 'petCrop', grid: [13, 10], save: function (data) {
+        return rootRef.child('pets').push({ name: name, owner: owner, photo: data, addedAt: Date.now() }).then(function () {
+          $('petName').value = ''; $('petOwner').value = ''; $('petPhoto').value = '';
+        });
+      } });
+    });
+
+    $('panelToggles').addEventListener('change', function (ev) {
+      var cb = ev.target;
+      if (!cb.dataset || !cb.dataset.panel) return;
+      rootRef.child('settings/panels/' + cb.dataset.panel).set(cb.checked)
+        .then(function () { toast((cb.checked ? 'Turned on: ' : 'Turned off: ') + cb.parentNode.textContent + '.'); })
+        .catch(function (err) { cb.checked = !cb.checked; toast(failText(err), true); });
+    });
+
+    $('builtinTrivia').addEventListener('change', function () {
+      rootRef.child('settings/builtinTrivia').set(this.checked).then(function () { toast('Trivia updated.'); }).catch(function (err) { toast(failText(err), true); });
+    });
+    $('triviaForm').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var q = $('triviaQ').value.trim(), a = $('triviaA').value.trim();
+      if (!q || !a) return;
+      rootRef.child('trivia').push({ q: q, a: a, addedAt: Date.now() }).then(function () {
+        $('triviaQ').value = ''; $('triviaA').value = '';
+        toast('Question added.');
+      }).catch(function (err) { toast(failText(err), true); });
+    });
+
+    $('msgClear').addEventListener('click', function () {
+      $('msgText').value = ''; $('msgText').dispatchEvent(new Event('input'));
+      rootRef.child('settings/message').set('').then(function () { toast('Message cleared.'); })
+        .catch(function (err) { toast(failText(err), true); });
+    });
+
+    /* ---------- Dutchie report parsing ---------- */
+    var pending = [];
+    function loadXLSX() {
+      return new Promise(function (resolve, reject) {
+        if (window.XLSX) { resolve(); return; }
+        var s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+        s.onload = function () { resolve(); };
+        s.onerror = function () { reject(new Error("Couldn't load the spreadsheet reader. Check the internet connection.")); };
+        document.head.appendChild(s);
+      });
+    }
+    function parseNum(v) {
+      if (typeof v === 'number') return v;
+      var s = String(v == null ? '' : v).trim();
+      if (!s) return 0;
+      var neg = /^\(.*\)$/.test(s) || /^-/.test(s) || /^\$-/.test(s);
+      var n = parseFloat(s.replace(/[^0-9.]/g, '')) || 0;
+      return neg ? -n : n;
+    }
+    function toYmd(v) {
+      if (v instanceof Date && !isNaN(v)) return ymd(v);
+      var s = String(v == null ? '' : v).trim();
+      var m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+      if (m) return m[1] + '-' + pad2(+m[2]) + '-' + pad2(+m[3]);
+      m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+      if (m) { var y = +m[3]; if (y < 100) y += 2000; return y + '-' + pad2(+m[1]) + '-' + pad2(+m[2]); }
+      // Text dates like "Oct 2, 2026 3:15 PM"
+      if (/[a-z]/i.test(s) && /\d{4}/.test(s)) { var t = new Date(s); if (!isNaN(t)) return ymd(t); }
+      return null;
+    }
+    function round2(n) { return Math.round(n * 100) / 100; }
+
+    function readFile(file) {
+      return new Promise(function (resolve, reject) {
+        var fr = new FileReader();
+        fr.onload = function () { resolve(fr.result); };
+        fr.onerror = function () { reject(new Error("Couldn't read " + file.name + '.')); };
+        fr.readAsArrayBuffer(file);
+      });
+    }
+
+    function parseReport(file, buf) {
+      var wb = XLSX.read(buf, { type: 'array' });
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, dateNF: 'yyyy-mm-dd', defval: '' });
+      var rawRows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: '' });
+      var hi = -1;
+      for (var i = 0; i < Math.min(rows.length, 60); i++) {
+        var low = (rows[i] || []).map(function (c) { return String(c).trim().toLowerCase(); });
+        if (low.indexOf('order id') >= 0 && (low.indexOf('budtender name') >= 0 || low.indexOf('budtender') >= 0 || low.indexOf('employee') >= 0)) { hi = i; break; }
+      }
+      if (hi < 0) throw new Error(file.name + ": couldn't find the Budtender Name and Order ID columns. Use the same Dutchie report as the ATV contest.");
+      var H = rows[hi].map(function (c) { return String(c).trim().toLowerCase(); });
+      function col(names) { for (var j = 0; j < names.length; j++) { var k = H.indexOf(names[j]); if (k >= 0) return k; } return -1; }
+      var C = {
+        order: col(['order id']),
+        bud: col(['budtender name', 'budtender', 'employee']),
+        units: col(['total inventory sold', 'inventory sold', 'quantity sold', 'quantitysold', 'qty']),
+        net: col(['net sales', 'netsales']),
+        cust: col(['customer name', 'customer']),
+        time: col(['order time', 'transaction time', 'order date', 'transaction date', 'completed date', 'completed on']),
+        date: -1
+      };
+      // Pick the column that dates each sale. Prefer an order or transaction date,
+      // and never a return, refund, export or birth date, which only some rows have.
+      var DATE_PREF = ['order date', 'transaction date', 'sale date', 'sold date', 'completed date', 'completed on', 'order time', 'transaction time', 'created date', 'date'];
+      for (var dp = 0; dp < DATE_PREF.length && C.date < 0; dp++) { var di = H.indexOf(DATE_PREF[dp]); if (di >= 0) C.date = di; }
+      for (var k = 0; k < H.length && C.date < 0; k++) {
+        if (/date/.test(H[k]) && !/export|return|refund|void|birth|expir|modif|updat/.test(H[k])) C.date = k;
+      }
+      if (C.units < 0 || C.net < 0) throw new Error(file.name + ': missing the Total Inventory Sold or Net Sales column.');
+
+      var from = null, to = null;
+      for (var m = 0; m < hi; m++) {
+        var label = String((rows[m] || [])[0] || '').trim().toLowerCase();
+        if (label.indexOf('from') === 0) from = toYmd(rows[m][1]);
+        if (label.indexOf('to') === 0) to = toYmd(rows[m][1]);
+      }
+      if (C.date < 0 && from && to && from !== to) {
+        throw new Error(file.name + ' covers ' + shortDate(from) + ' to ' + shortDate(to) + " and doesn't break sales out by day. Export one day at a time.");
+      }
+      var reportDay = (from && (!to || from === to)) ? from : null;
+
+      var byDay = {};
+      for (var r = hi + 1; r < rows.length; r++) {
+        var row = rows[r];
+        if (!row) continue;
+        var oid = String(row[C.order] || '').trim();
+        if (!oid) continue;
+        var day = (C.date >= 0 ? toYmd(row[C.date]) : null) || reportDay || '?';
+        var D = byDay[day] || (byDay[day] = { net: 0, orderIds: {}, orders: {}, cust: {} });
+        var net = parseNum(row[C.net]), units = parseNum(row[C.units]);
+        D.net += net;
+        D.orderIds[oid] = 1;
+        var name = String(row[C.bud] || '').replace(/[\s\u0000-\u001F\u007F]+/g, ' ').trim();
+        // Customer and time of each order, used only in this browser to match
+        // attributions. Never saved to the database.
+        if (C.cust >= 0 && C.time >= 0) {
+          var co = D.cust[oid];
+          if (!co) {
+            var when = cellTime((rawRows[r] || [])[C.time]);
+            if (when) co = D.cust[oid] = { id: oid, t: when, cust: String(row[C.cust] || '').trim(), bud: name, net: 0 };
+          }
+          if (co) co.net += net;
+        }
+        if (!name || units <= 0 || net <= 0) continue;
+        var o = D.orders[oid] || (D.orders[oid] = { name: name, units: 0, net: 0 });
+        o.units += units; o.net += net;
+      }
+      // A report that spans several days must date every sale. If some rows have no
+      // usable date, stop rather than piling them all onto one day.
+      var spans = from && to && from !== to;
+      var dated = Object.keys(byDay).filter(function (k) { return k !== '?'; });
+      if (byDay['?'] && (spans || dated.length)) {
+        throw new Error(file.name + (spans ? ' covers ' + shortDate(from) + ' to ' + shortDate(to) : ' mixes days') +
+          " and some sales have no date, so they can't be split by day. Export one day at a time.");
+      }
+      return Object.keys(byDay).map(function (dk) {
+        var D = byDay[dk], b = {};
+        Object.keys(D.orders).forEach(function (oid) {
+          var o = D.orders[oid], key = safeKey(o.name);
+          if (!b[key]) b[key] = { name: o.name, txn: 0, units: 0, net: 0 };
+          b[key].txn++; b[key].units += o.units; b[key].net += o.net;
+        });
+        Object.keys(b).forEach(function (key) { b[key].units = round2(b[key].units); b[key].net = round2(b[key].net); });
+        return { date: dk === '?' ? null : dk, file: file.name, netSales: round2(D.net), orders: Object.keys(D.orderIds).length, budtenders: b, cust: vals(D.cust) };
+      });
+    }
+
+
+    /* ---------- attribution matching ---------- */
+    var pendingAttr = null, heldAttr = [];
+    // A spreadsheet time cell (serial number) or text, as a local Date.
+    function cellTime(v) {
+      if (v instanceof Date && !isNaN(v)) return v;
+      if (typeof v === 'number' && v > 20000) {
+        var u = new Date(Math.round((v - 25569) * 86400000));
+        return new Date(u.getUTCFullYear(), u.getUTCMonth(), u.getUTCDate(), u.getUTCHours(), u.getUTCMinutes(), u.getUTCSeconds());
+      }
+      return wallTime(v);
+    }
+    // "2026-10-12T14:27:14.871Z" or "10/12/2026 2:27 PM". The attribution export
+    // marks its times as UTC but they are really store time, so the Z is ignored.
+    function wallTime(v) {
+      var s = String(v == null ? '' : v).trim();
+      var m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[T ](\d{1,2}):(\d{2})(?::(\d{2}))?/);
+      if (m) return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0));
+      m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})[ ,]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([ap]m)?/i);
+      if (m) {
+        var y = +m[3]; if (y < 100) y += 2000;
+        var h = +m[4], ap = (m[7] || '').toLowerCase();
+        if (ap === 'pm' && h < 12) h += 12;
+        if (ap === 'am' && h === 12) h = 0;
+        return new Date(y, +m[1] - 1, +m[2], h, +m[5], +(m[6] || 0));
+      }
+      return null;
+    }
+    function hm(d) {
+      var h = d.getHours(), ap = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      return h + ':' + pad2(d.getMinutes()) + ' ' + ap;
+    }
+    function nameToks(s) {
+      return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-z\s]/g, '').trim().split(/\s+/).filter(Boolean);
+    }
+    function shortCust(first, last) {
+      var f = String(first || '').trim(), l = String(last || '').trim();
+      return (f + (l ? ' ' + l.charAt(0).toUpperCase() + '.' : '')).trim();
+    }
+    // How well a Dutchie customer name fits the attribution's first and last name.
+    // 4 = both match, 3 = one is only an initial or prefix, 0 = not the same person.
+    function nameScore(first, last, cust) {
+      var w = nameToks(cust);
+      var F = nameToks(first).join(''), L = nameToks(last).join('');
+      if (!w.length || !F) return 0;
+      var cf = w[0], cl = w.slice(1).join(''), cLast = w.length > 1 ? w[w.length - 1] : '';
+      var sc;
+      if (cf === F) sc = 2;
+      else if (cf.indexOf(F) === 0 || F.indexOf(cf) === 0) sc = 1;
+      else return 0;
+      if (!L || !cl) return sc;
+      if (cl === L || cLast === L) return sc + 2;
+      if (L.charAt(0) === cl.charAt(0) && (L.length === 1 || cl.length === 1)) return sc + 1;
+      return 0;
+    }
+    function isTestPhone(p) {
+      var d = String(p || '').replace(/\D/g, '');
+      if (d.length === 11 && d.charAt(0) === '1') d = d.slice(1);
+      return !d || /^(\d)\1+$/.test(d) || /^1(000)+0*$/.test(d) || ['1234567890', '1234567899', '0123456789', '9876543210'].indexOf(d) >= 0;
+    }
+    function looksLikeAttrib(buf) {
+      try {
+        var head = new TextDecoder().decode(new Uint8Array(buf).slice(0, 400)).toLowerCase();
+        return head.indexOf('helped_by') >= 0 || head.indexOf('helped by') >= 0;
+      } catch (e) { return false; }
+    }
+    function parseAttrib(file, buf) {
+      var wb = XLSX.read(buf, { type: 'array', raw: true });
+      var rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: false, defval: '' });
+      var H = (rows[0] || []).map(function (c) { return String(c).trim().toLowerCase().replace(/\s+/g, '_'); });
+      function col(n) { return H.indexOf(n); }
+      var C = { time: col('order_time'), by: col('helped_by'), first: col('customer_first'), last: col('customer_last'), phone: col('customer_phone'), oid: col('dutchie_order_id') };
+      if (C.time < 0 || C.by < 0 || C.first < 0) throw new Error(file.name + ": couldn't find the order_time, helped_by and customer_first columns.");
+      var out = [], skipped = 0;
+      for (var r = 1; r < rows.length; r++) {
+        var row = rows[r]; if (!row) continue;
+        var raw = String(row[C.time] || '').trim();
+        var t = wallTime(raw);
+        if (!t) continue;
+        var by = String(row[C.by] || '').replace(/\s+/g, ' ').trim().replace(/\.$/, '');
+        if (!by || /^(blank|none|n\/a|na|-)$/i.test(by) || (C.phone >= 0 && isTestPhone(row[C.phone]))) { skipped++; continue; }
+        // The order ID field is usually junk text; keep it only when it's a real number.
+        var oid = C.oid >= 0 ? String(row[C.oid] || '').trim() : '';
+        out.push({ id: 'a' + raw.replace(/\D/g, '').slice(0, 17), t: t, day: ymd(t), by: by,
+          first: String(row[C.first] || '').trim(), last: C.last >= 0 ? String(row[C.last] || '').trim() : '',
+          oid: /^\d{5,}$/.test(oid) ? oid : '' });
+      }
+      return { file: file.name, rows: out, skipped: skipped };
+    }
+    // Match each attribution to a completed order: same customer, rung up from
+    // 30 minutes before the attribution to 4 hours after it. A later visit by the
+    // same customer is a new sale, not this one.
+    // When two entries could claim the same sale (the customer was logged twice),
+    // the sale goes to the entry whose Dutchie order ID matches, otherwise to the
+    // entry logged closest to checkout. The other entry is marked as a duplicate.
+    var ATTR_BEFORE_MIN = 30, ATTR_AFTER_MIN = 240;
+    function matchAttrib(attrs, orders, coveredDays) {
+      attrs = attrs.slice().sort(function (a, b) { return a.t - b.t; });
+      var used = {}, out = {}, outside = {}, res = [], byId = {};
+      orders.forEach(function (o) { byId[String(o.id)] = o; });
+      var live = attrs.filter(function (a) {
+        if (!coveredDays[a.day]) { outside[a.day] = 1; return false; }
+        return true;
+      });
+      // Every order each entry could be: name fits and the time is in the window.
+      live.forEach(function (a, i) {
+        var at = a.t.getTime(), from = at - ATTR_BEFORE_MIN * 60000, end = at + ATTR_AFTER_MIN * 60000;
+        var cands = [];
+        orders.forEach(function (o) {
+          var ot = o.t.getTime();
+          if (ot < from || ot > end) return;
+          var sc = nameScore(a.first, a.last, o.cust);
+          if (sc) cands.push({ o: o, sc: sc, gap: Math.abs(ot - at) });
+        });
+        res[i] = { a: a, cands: cands, best: null };
+      });
+      // 1. An order ID in the export that matches a sale for the same customer settles it.
+      res.forEach(function (r) {
+        var o = r.a.oid && byId[r.a.oid];
+        if (!o || used[o.id] || !nameScore(r.a.first, r.a.last, o.cust)) return;
+        r.best = { o: o, sc: 4 }; used[o.id] = 1;
+      });
+      // 2. Full-name matches, closest in time first, so a sale goes to the entry
+      //    logged nearest to checkout.
+      var pairs = [];
+      res.forEach(function (r, i) { if (!r.best) r.cands.forEach(function (c) { if (c.sc >= 4) pairs.push({ i: i, c: c }); }); });
+      pairs.sort(function (x, y) { return x.c.gap - y.c.gap; });
+      pairs.forEach(function (p) {
+        var r = res[p.i];
+        if (r.best || used[p.c.o.id]) return;
+        r.best = p.c; used[p.c.o.id] = 1;
+      });
+      // 3. Anything left: a partial-name match goes to review (it doesn't claim the
+      //    sale), a customer whose only sale was already credited is a duplicate.
+      res.forEach(function (r) {
+        if (r.best) return;
+        var best = null, sawUsed = false;
+        r.cands.forEach(function (c) {
+          if (used[c.o.id]) { sawUsed = true; return; }
+          if (!best || c.sc > best.sc || (c.sc === best.sc && c.gap < best.gap)) best = c;
+        });
+        r.best = best; r.dup = !best && sawUsed;
+      });
+      res.forEach(function (r) {
+        var a = r.a, best = r.best;
+        var e = { by: a.by, c: shortCust(a.first, a.last), t: hm(a.t), st: 'none', net: 0 };
+        if (best) {
+          e.st = best.sc >= 4 ? 'auto' : 'review';
+          e.net = round2(best.o.net);
+          e.sold = String(best.o.bud || '').replace(/_x0009_/gi, ' ');
+          e.ot = hm(best.o.t) + (ymd(best.o.t) !== a.day ? ' next day' : '');
+          e.oc = shortCust.apply(null, (function (w) { return [w[0], w.slice(1).join(' ')]; })(String(best.o.cust || '').trim().split(/\s+/)));
+        } else if (r.dup) e.st = 'dup';
+        (out[a.day] || (out[a.day] = {}))[a.id] = e;
+      });
+      return { days: out, outside: Object.keys(outside).sort() };
+    }
+    function buildPendingAttr(attrFiles) {
+      if (!attrFiles.length) { pendingAttr = null; return; }
+      var orders = [], covered = {};
+      pending.forEach(function (p) { if (p.date) { covered[p.date] = 1; orders = orders.concat(p.cust || []); } });
+      var all = [], skipped = 0;
+      attrFiles.forEach(function (f) { all = all.concat(f.rows); skipped += f.skipped; });
+      if (!pending.length) { pendingAttr = { error: 'Choose the Dutchie sales report for the same days along with the attribution export.' }; return; }
+      if (!orders.length) { pendingAttr = { error: "The Dutchie report doesn't have Customer Name and Order Time columns, so attributions can't be matched." }; return; }
+      var m = matchAttrib(all, orders, covered);
+      m.skipped = skipped;
+      pendingAttr = m;
+    }
+    function attrCounts(daysObj) {
+      var c = { auto: 0, review: 0, none: 0, dup: 0 };
+      Object.keys(daysObj).forEach(function (d) { vals(daysObj[d]).forEach(function (e) { c[e.st] = (c[e.st] || 0) + 1; }); });
+      return c;
+    }
+
+    $('reportFile').addEventListener('change', function (ev) {
+      var files = Array.prototype.slice.call(ev.target.files || []);
+      ev.target.value = '';
+      if (!files.length) return;
+      $('uploadMsg').textContent = '';
+      $('parsed').innerHTML = '<p class="a-hint">Reading…</p>';
+      loadXLSX().then(function () {
+        return Promise.all(files.map(function (f) {
+          return readFile(f).then(function (buf) {
+            return looksLikeAttrib(buf) ? { attrib: parseAttrib(f, buf) } : parseReport(f, buf);
+          }).catch(function (err) { return { error: err.message }; });
+        }));
+      }).then(function (results) {
+        // The two files can be picked together or one after the other: a pick
+        // with only the attribution export keeps the sales report already
+        // chosen, and a pick with only a sales report keeps the export.
+        var errors = [], attrFiles = [], sales = [];
+        results.forEach(function (res) {
+          if (res && res.error) errors.push(res.error);
+          else if (res && res.attrib) attrFiles.push(res.attrib);
+          else sales = sales.concat(res);
+        });
+        if (sales.length) pending = sales;
+        if (attrFiles.length) heldAttr = attrFiles;
+        buildPendingAttr(pending.length ? heldAttr : []);
+        if (pendingAttr && pendingAttr.error) { errors.push(pendingAttr.error); pendingAttr = null; }
+        $('uploadMsg').textContent = errors.join(' ');
+        if (!pending.length && heldAttr.length) {
+          var na = 0; heldAttr.forEach(function (f) { na += f.rows.length; });
+          $('parsed').innerHTML = '<p class="a-hint"><b>Attribution export ready</b> (' + na + ' entries). Now choose the Dutchie sales report for the same days.</p>' +
+            '<div class="a-row"><button class="a-btn" type="button" id="cancelPending">Cancel</button></div>';
+          $('cancelPending').addEventListener('click', function () { heldAttr = []; pending = []; renderPending(); });
+          return;
+        }
+        renderPending();
+      }).catch(function (err) {
+        $('parsed').innerHTML = '';
+        $('uploadMsg').textContent = err.message;
+      });
+    });
+
+    function renderPending() {
+      if (!pending.length) { pendingAttr = null; $('parsed').innerHTML = ''; return; }
+      var y = addDays(todayStr(), -1);
+      var html = '<div class="a-table-wrap"><table class="a-table"><thead><tr><th>Day</th><th class="r">Net sales</th><th class="r">Orders</th><th class="r">Budtenders</th><th>File</th></tr></thead><tbody>';
+      pending.forEach(function (p, i) {
+        var exists = p.date && days()[p.date];
+        var dayCell = p.date
+          ? esc(shortDate(p.date)) + (exists ? ' <span class="sub" style="color:var(--a-muted)">(replaces)</span>' : '')
+          : '<input type="date" data-pdate="' + i + '" value="' + y + '" max="' + todayStr() + '" style="font:inherit;background:var(--a-field);color:var(--a-ink);border:1px solid var(--a-line);border-radius:8px;padding:6px 8px">';
+        html += '<tr><td>' + dayCell + '</td><td class="r">' + money(p.netSales) + '</td><td class="r">' + p.orders + '</td><td class="r">' + Object.keys(p.budtenders).length + '</td><td>' + esc(p.file) + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+      if (pending.some(function (p) { return !p.date; })) html += '<p class="a-hint">This report doesn\'t say which day it covers. Pick the day above before saving.</p>';
+      if (pendingAttr) {
+        var ad = Object.keys(pendingAttr.days).sort(), ac = attrCounts(pendingAttr.days);
+        html += '<p class="a-hint"><b>Attributions</b>' + (ad.length ? ' for ' + esc(shortMD(ad[0])) + (ad.length > 1 ? ' to ' + esc(shortMD(ad[ad.length - 1])) : '') + ': ' +
+          ac.auto + ' credited, ' + ac.review + ' to review, ' + ac.none + ' with no sale' + (ac.dup ? ', ' + ac.dup + ' duplicate' : '') + '.' : ': none on the days in this report.') +
+          (pendingAttr.skipped ? ' Skipped ' + pendingAttr.skipped + ' blank or test entries.' : '') +
+          (pendingAttr.outside.length ? ' Not matched yet (no sales report for ' + pendingAttr.outside.map(shortMD).join(', ') + ').' : '') + '</p>';
+      }
+      html += '<div class="a-row"><button class="a-btn primary" type="button" id="savePending">Save to board</button><button class="a-btn" type="button" id="cancelPending">Cancel</button></div>';
+      $('parsed').innerHTML = html;
+      $('cancelPending').addEventListener('click', function () { pending = []; heldAttr = []; renderPending(); });
+      $('savePending').addEventListener('click', savePending);
+    }
+
+    function savePending() {
+      var btn = $('savePending');
+      var writes = {};
+      for (var i = 0; i < pending.length; i++) {
+        var p = pending[i];
+        var date = p.date;
+        if (!date) { var inp = document.querySelector('[data-pdate="' + i + '"]'); date = inp ? inp.value : null; }
+        if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) { $('uploadMsg').textContent = 'Pick a day for every report first.'; return; }
+        writes['days/' + date] = { netSales: p.netSales, orders: p.orders, budtenders: p.budtenders, file: p.file, uploadedAt: Date.now() };
+      }
+      if (pendingAttr) {
+        Object.keys(pendingAttr.days).forEach(function (d) {
+          var prev = (((DATA.attrib || {})[d] || {}).list) || {}, list = pendingAttr.days[d];
+          Object.keys(list).forEach(function (id) {
+            var ps = (prev[id] || {}).st;
+            if ((ps === 'ok' || ps === 'no') && list[id].st !== 'dup') list[id].st = ps;
+          });
+          writes['attrib/' + d] = { list: list, uploadedAt: Date.now() };
+        });
+      }
+      btn.disabled = true;
+      rootRef.update(writes).then(function () {
+        var n = Object.keys(writes).filter(function (k) { return k.indexOf('days/') === 0; }).length;
+        var na = pendingAttr ? Object.keys(pendingAttr.days).length : 0;
+        pending = []; heldAttr = []; renderPending();
+        toast('Saved ' + n + (n === 1 ? ' day' : ' days') + ' to the board' + (na ? ', with attributions.' : '.'));
+      }).catch(function (err) { btn.disabled = false; toast(failText(err), true); });
+    }
+  }
+
+  if (isAdmin) startAdmin(); else startTV();
+})();
+</script>
+<style>
+  /* Collapsible admin sections */
+  .a-card > h2.a-fold { cursor: pointer; user-select: none; -webkit-user-select: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .a-card > h2.a-fold:hover { color: var(--a-ink); }
+  .a-card > h2.a-fold:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; border-radius: 4px; }
+  .a-card > h2.a-fold::after { content: ''; flex: none; width: 8px; height: 8px; margin-right: 4px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: translateY(-2px) rotate(45deg); transition: transform .15s ease; }
+  .a-card.a-folded > h2.a-fold::after { transform: rotate(-45deg); }
+  .a-card.a-folded > :not(h2) { display: none !important; }
+  .a-foldbar { display: flex; justify-content: flex-end; gap: 8px; }
+</style>
+<script>
+(function () {
+  var KEY = 'usqAdminFolded';
+  var OPEN_BY_DEFAULT = { 'Upload Dutchie report': true };
+  var saved = null;
+  try { saved = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { saved = null; }
+  var state = saved || {};
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+  var cards = [];
+  Array.prototype.forEach.call(document.querySelectorAll('section.a-card'), function (card) {
+    var h = card.firstElementChild;
+    if (!h || h.tagName !== 'H2') return;
+    var name = (h.textContent || '').trim();
+    if (!name || name === 'Enter PIN') return;
+    var key = h.id || name;
+    h.classList.add('a-fold');
+    h.setAttribute('role', 'button');
+    h.setAttribute('tabindex', '0');
+    function set(folded, remember) {
+      card.classList.toggle('a-folded', folded);
+      h.setAttribute('aria-expanded', folded ? 'false' : 'true');
+      if (remember) { state[key] = folded; save(); }
+    }
+    var folded = (key in state) ? !!state[key] : !OPEN_BY_DEFAULT[name];
+    set(folded, false);
+    function toggle() { set(!card.classList.contains('a-folded'), true); }
+    h.addEventListener('click', toggle);
+    h.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+    });
+    cards.push({ set: set });
+  });
+
+  if (cards.length) {
+    var first = document.querySelector('section.a-card > h2.a-fold').parentNode;
+    var bar = document.createElement('div');
+    bar.className = 'a-foldbar';
+    bar.innerHTML = '<button type="button" class="a-btn small" data-fold="0">Expand all</button>' +
+                    '<button type="button" class="a-btn small" data-fold="1">Collapse all</button>';
+    bar.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-fold]');
+      if (!b) return;
+      var f = b.getAttribute('data-fold') === '1';
+      cards.forEach(function (c) { c.set(f, true); });
+    });
+    first.parentNode.insertBefore(bar, first);
+  }
+})();
+</script>
+</body>
+</html>
