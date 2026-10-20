@@ -793,7 +793,9 @@
     var w = String(name || '').trim().split(/\s+/).filter(Boolean);
     if (w.length > 2 && /^(usq|soho|dtbk)$/i.test(w[w.length - 1])) w.pop();
     if (w.length < 2) return w.join(' ');
-    return w[0] + ' ' + w[w.length - 1].charAt(0).toUpperCase();
+    var last = w[w.length - 1].replace(/[^A-Za-z0-9\u00C0-\u024F]/g, '');
+    if (last.length === 1) return w.slice(0, -1).join(' ') + ' ' + last.toUpperCase(); // already "Juan Carlos R"
+    return w[0] + (last ? ' ' + last.charAt(0).toUpperCase() : '');
   }
   function isExcluded(name, terms) {
     var n = String(name).toLowerCase().trim();
@@ -1314,7 +1316,7 @@
   }
   // Photo card: the photo fills the left side, top to bottom (15 x 12 tiles), with the
   // words on the right. Party cards get confetti above and below the words.
-  function photoCard(key, lines, party) {
+  function photoCard(key, lines, party, leafy) {
     var BW = 15, BH = ROWS, r = [];
     for (var i = 0; i < ROWS; i++) r.push(blank());
     for (var y = 0; y < BH; y++) for (var x = 0; x < BW; x++) r[y][x] = '\u0001' + key + '|' + x + '|' + y + '|' + BW + '|' + BH;
@@ -1327,6 +1329,14 @@
       var top = confetti(0), bot = confetti(5);
       for (var c = tc; c < COLS; c++) { r[0][c] = top[c]; r[ROWS - 1][c] = bot[c]; }
     }
+    // Birthdays: a frame of cannabis leaves around the words (mixed with confetti on the day itself)
+    if (leafy) {
+      for (var c2 = BW; c2 < COLS; c2++) {
+        var lf = !party || (c2 % 2 === 0);
+        if (lf) { r[0][c2] = '🌿'; r[ROWS - 1][c2] = '🌿'; }
+      }
+      for (var y2 = 1; y2 < ROWS - 1; y2++) { r[y2][BW] = y2 % 2 ? '🌿' : ' '; r[y2][COLS - 1] = y2 % 2 ? ' ' : '🌿'; }
+    }
     return r;
   }
   function photoCelebrate(ev, cycle, upcoming) {
@@ -1337,16 +1347,16 @@
       e = today[cycle % today.length];
       if (!e.key || !P[e.key]) return null;
       return photoCard(e.key, e.kind === 'bday'
-        ? ['HAPPY', 'BIRTHDAY', '', shortName(e.name) + '!']
-        : ['HAPPY', e.years + (e.years === 1 ? ' YEAR' : ' YEARS'), 'AT TTA', '', shortName(e.name) + '!'], true);
+        ? ['HAPPY', 'BIRTHDAY', '', e.name + '!']
+        : ['HAPPY', e.years + (e.years === 1 ? ' YEAR' : ' YEARS'), 'AT TTA', '', e.name + '!'], true, e.kind === 'bday');
     }
     var up = ev.filter(function (x) { return x.key && P[x.key] && x.days > 0; });
     if (!upcoming || !up.length) return null;
     e = up[cycle % up.length];
     var when = e.days === 1 ? 'TOMORROW' : shortMD(e.date);
     return photoCard(e.key, e.kind === 'bday'
-      ? [e.days <= 21 ? 'COMING UP' : 'USQ TEAM', '', shortName(e.name), '', 'BIRTHDAY', when]
-      : [e.days <= 21 ? 'COMING UP' : 'USQ TEAM', '', shortName(e.name), '', e.years + (e.years === 1 ? ' YEAR' : ' YEARS'), 'AT TTA', when], false);
+      ? [e.days <= 21 ? 'COMING UP' : 'USQ TEAM', '', e.name, '', 'BIRTHDAY', when]
+      : [e.days <= 21 ? 'COMING UP' : 'USQ TEAM', '', e.name, '', e.years + (e.years === 1 ? ' YEAR' : ' YEARS'), 'AT TTA', when], false, e.kind === 'bday');
   }
   /* ---------- fun pages: records, Green Wednesday, pet of the month, weather ---------- */
   var WX = null;
@@ -1561,7 +1571,7 @@
       var lines = [];
       today.slice(0, 3).forEach(function (e) {
         lines.push(center(e.kind === 'bday' ? 'HAPPY BIRTHDAY' : 'HAPPY ' + e.years + (e.years === 1 ? ' YEAR' : ' YEARS') + ' AT TTA'));
-        lines.push(center(shortName(e.name) + '!'));
+        lines.push(center(e.name + '!'));
         lines.push(blank());
       });
       lines.pop();
@@ -1572,13 +1582,21 @@
       return framed(r);
     }
     r = [center('COMING UP'), center('BIRTHDAYS + ANNIVERSARIES'), blank()];
+    // Full names: if a name doesn't fit beside "BIRTHDAY", use the short label (BDAY / YRS),
+    // and if it still doesn't fit, the rest of the name goes on the next row.
     ev.slice(0, 8).forEach(function (e) {
+      var nm = txt(e.name), row = blank();
       var label = txt(e.kind === 'bday' ? 'BIRTHDAY' : e.years + (e.years === 1 ? ' YEAR' : ' YEARS'));
-      var row = blank();
+      if (nm.length > COLS - 1 - label.length - 1 - 8) label = txt(e.kind === 'bday' ? 'BDAY' : e.years + (e.years === 1 ? ' YR' : ' YRS'));
+      var room = COLS - 1 - label.length - 1 - 8;
       put(row, 1, txt(e.days === 1 ? 'TMRW' : shortMD(e.date), 6));
       put(row, COLS - 1 - label.length, label);
-      put(row, 8, txt(shortName(e.name), COLS - 1 - label.length - 1 - 8));
+      if (nm.length <= room) { put(row, 8, nm); r.push(row); return; }
+      var parts = wrap(e.name, room);
+      put(row, 8, txt(parts[0], room));
       r.push(row);
+      var rest = parts.slice(1).join(' ');
+      if (rest) { var row2 = blank(); put(row2, 8, txt(rest, COLS - 1 - 8)); r.push(row2); }
     });
     return framed(r);
   }
