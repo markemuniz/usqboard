@@ -440,7 +440,7 @@
         <h2>Trivia</h2>
         <label class="a-row" for="builtinTrivia" style="font-size:15px">
           <input type="checkbox" id="builtinTrivia" style="width:20px;height:20px">
-          Include the 20 built-in cannabis trivia questions
+          Include the built-in trivia (13 Union Square + 20 cannabis questions)
         </label>
         <form id="triviaForm" class="a-grid2">
           <div class="a-field" style="grid-column:1/-1">
@@ -637,10 +637,27 @@
     { q: 'Why do edibles take longer to kick in than smoking?', a: "They're digested and processed by the liver first, so it can take 30 minutes to 2 hours" },
     { q: "What does 'full spectrum' mean on a label?", a: "It keeps a broad range of the plant's cannabinoids and terpenes, not one isolated compound" }
   ];
+
+  /* Union Square trivia, mixed in with the built-in questions */
+  var USQ_TRIVIA = [
+    { q: "Union Square isn't named after the Civil War Union. What 'union' is it named for?", a: 'Broadway meeting the old Bowery Road (now 4th Ave)' },
+    { q: "Which famous pop artist had his studio, The Factory, on Union Square West?", a: 'Andy Warhol' },
+    { q: "America's first Labor Day parade marched past Union Square in what year?", a: '1882' },
+    { q: 'The giant number clock over Union Square South was turned into what in 2020?', a: 'The Climate Clock' },
+    { q: "The Lafayette statue in the park was made by the sculptor of which famous NYC landmark?", a: 'The Statue of Liberty' },
+    { q: 'Which Indian leader has a statue in the southwest corner of Union Square Park?', a: 'Mahatma Gandhi' },
+    { q: 'Which president sits on horseback in the big bronze statue at the south end of the park?', a: 'George Washington' },
+    { q: 'Which four days a week does the Union Square Greenmarket set up?', a: 'Mon, Wed, Fri and Sat' },
+    { q: 'How many subway lines stop at 14 St-Union Square?', a: 'Eight: 4, 5, 6, L, N, Q, R, W' },
+    { q: "Danny Meyer's Union Square Cafe opened in 1985. Which burger chain did his group go on to create?", a: 'Shake Shack' },
+    { q: 'Which famous political machine had its last headquarters at 44 Union Square East?', a: 'Tammany Hall' },
+    { q: 'Which famous jewelry store had its flagship on Union Square West in the 1870s?', a: 'Tiffany & Co.' },
+    { q: 'Which president has a statue in Union Square, put up five years after he died?', a: 'Abraham Lincoln (1870)' }
+  ];
   function triviaList() {
     var custom = vals(DATA.trivia).filter(function (x) { return x && x.q && x.a; })
       .sort(function (a, b) { return (a.addedAt || 0) - (b.addedAt || 0); });
-    return custom.concat(S().builtinTrivia === false ? [] : TRIVIA);
+    return custom.concat(S().builtinTrivia === false ? [] : USQ_TRIVIA.concat(TRIVIA));
   }
 
   var PANELS = [
@@ -665,7 +682,8 @@
     ['pet', 'Pet of the month'],
     ['bdayToday', 'Birthday celebration'],
     ['onthisday', 'On this day'],
-    ['nycfact', 'NYC fact']
+    ['nycfact', 'NYC fact'],
+    ['usqfact', 'Union Square fact']
   ];
   function panelOn(name) {
     var key = (name === 'trivQ' || name === 'trivA') ? 'trivia' : (name === 'celebPhoto' ? 'celebrate' : name);
@@ -1536,7 +1554,48 @@
     return framed(r);
   }
 
-  var ORDER = ['bdayToday', 'welcome', 'weather', 'onthisday', 'home', 'records', 'mis', 'uptDay', 'trivQ', 'stars', 'countdown', 'bdayToday', 'nycfact', 'spotlight', 'atvDay', 'trivA', 'pet', 'quote', 'celebrate', 'celebPhoto', 'attrib', 'bdayToday', 'uptMonth', 'nycfact', 'shout', 'atvMonth', 'bdayToday', 'message'];
+  /* Union Square facts: built in, so they always show. Own counter on the TV. */
+  var USQ_FACTS = [
+    "Union Square isn't named for the Civil War Union. It's where Broadway and the old Bowery Road came together, a union of two roads.",
+    "Union Square Park opened to the public in 1839, and the whole square became a National Historic Landmark in 1997.",
+    "America's first Labor Day parade passed a reviewing stand at Union Square on September 5, 1882.",
+    "The George Washington statue on horseback was put up in 1856. It's one of the oldest public statues in New York City.",
+    "The Lafayette statue in the park was made by Frederic Auguste Bartholdi, the same sculptor who made the Statue of Liberty.",
+    "The giant number clock on One Union Square South went up in 1999. Since 2020 it has run as the Climate Clock.",
+    "Andy Warhol's Factory moved to 33 Union Square West in 1968, then to 860 Broadway, also on the square, a few years later.",
+    "The Union Square Greenmarket has been selling local farm food since 1976. Find it Mon, Wed, Fri and Sat.",
+    "The tall flagpole in the middle of the park went up in 1926. Its bronze base carries the full Declaration of Independence.",
+    "The 14 St-Union Square subway station is one of the busiest in the city, with eight lines: 4, 5, 6, L, N, Q, R and W.",
+    "Danny Meyer opened Union Square Cafe in 1985. His restaurant group later started Shake Shack from a hot dog cart.",
+    "Tammany Hall's 1929 headquarters still stands at 44 Union Square East.",
+    "Tiffany & Co. had its flagship on Union Square West in the 1870s, when the square was the city's fancy shopping area.",
+    "The Gandhi statue in the park was dedicated on October 2, 1986, his birthday.",
+    "The Lincoln statue in Union Square went up in 1870, five years after he died."
+  ];
+  var usqFactAt = 0, usqFactText = null, usqFactNum = 0;
+  function usqFactPanel(cycle) {
+    var L = USQ_FACTS;
+    var slotMs = Math.max(6, Math.min(90, num(S().rotateSecs, 15))) * 1000;
+    if (!usqFactText || Date.now() - usqFactAt > slotMs) {
+      var n = 0;
+      try { n = parseInt(localStorage.getItem('usqLocalFactN') || '0', 10) || 0; } catch (e) { n = Math.floor(Date.now() / 240000); }
+      var pass = Math.floor(n / L.length), pos = n % L.length;
+      usqFactText = L[nycShuffled(L.length, pass + 7)[pos]];
+      usqFactNum = pos + 1;
+      try { localStorage.setItem('usqLocalFactN', String(n + 1)); } catch (e) {}
+      usqFactAt = Date.now();
+    }
+    var head = center('UNION SQ FACT #' + usqFactNum);
+    head[0] = '{O}'; head[COLS - 1] = '{O}';
+    var lines = fitLines(wrap(usqFactText, COLS - 2), 8, COLS - 2).map(center);
+    var r = [head, blank()].concat(middle(lines, 2, 10));
+    while (r.length < ROWS - 1) r.push(blank());
+    r = r.slice(0, ROWS - 1);
+    r.push(edges('O'));
+    return framed(r);
+  }
+
+  var ORDER = ['bdayToday', 'welcome', 'weather', 'onthisday', 'home', 'records', 'mis', 'uptDay', 'trivQ', 'stars', 'countdown', 'bdayToday', 'usqfact', 'spotlight', 'atvDay', 'trivA', 'pet', 'quote', 'celebrate', 'celebPhoto', 'attrib', 'bdayToday', 'uptMonth', 'nycfact', 'shout', 'atvMonth', 'bdayToday', 'message'];
   function build(name, cycle) {
     if (!panelOn(name)) return null;
     switch (name) {
@@ -1563,6 +1622,7 @@
       case 'trivQ': return triviaQPanel(cycle);
       case 'onthisday': return onThisDayPanel(cycle);
       case 'nycfact': return nycFactPanel(cycle);
+      case 'usqfact': return usqFactPanel(cycle);
       case 'trivA': return triviaAPanel(cycle);
     }
     return null;
