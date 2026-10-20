@@ -1510,13 +1510,21 @@
       return framed(r);
     }
     r = [center('COMING UP'), center('BIRTHDAYS + ANNIVERSARIES'), blank()];
+    // Full names: if a name doesn't fit beside "BIRTHDAY", use the short label (BDAY / YRS),
+    // and if it still doesn't fit, the rest of the name goes on the next row.
     ev.slice(0, 8).forEach(function (e) {
+      var nm = txt(e.name), row = blank();
       var label = txt(e.kind === 'bday' ? 'BIRTHDAY' : e.years + (e.years === 1 ? ' YEAR' : ' YEARS'));
-      var row = blank();
+      if (nm.length > COLS - 1 - label.length - 1 - 8) label = txt(e.kind === 'bday' ? 'BDAY' : e.years + (e.years === 1 ? ' YR' : ' YRS'));
+      var room = COLS - 1 - label.length - 1 - 8;
       put(row, 1, txt(e.days === 1 ? 'TMRW' : shortMD(e.date), 6));
       put(row, COLS - 1 - label.length, label);
-      put(row, 8, txt(e.name, COLS - 1 - label.length - 1 - 8));
+      if (nm.length <= room) { put(row, 8, nm); r.push(row); return; }
+      var parts = wrap(e.name, room);
+      put(row, 8, txt(parts[0], room));
       r.push(row);
+      var rest = parts.slice(1).join(' ');
+      if (rest) { var row2 = blank(); put(row2, 8, txt(rest, COLS - 1 - 8)); r.push(row2); }
     });
     return framed(r);
   }
