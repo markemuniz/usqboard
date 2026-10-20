@@ -6,26 +6,39 @@
 <title>USQ Board</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600&family=Barlow:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600&family=Barlow:wght@400;500;600;700&family=Poppins:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&display=swap">
 <style>
   /* Split-flap board for the TV, plus a PIN-locked admin page at #admin.
-     Board: near-black bezel, charcoal flaps, warm white characters, seven color chips. */
+     Board: near-black bezel, charcoal flaps, warm white characters, The Travel Agency color chips. */
   :root {
+    /* The Travel Agency look: sky, cream cards, brick red, aqua, lime */
     --bezel: #070707;
-    --frame: #0B0B0B;
-    --flap: #1B1B1B;
-    --flap-hi: #242424;
-    --flap-lo: #141414;
-    --char: #F1F0EC;
-    --seam: rgba(0, 0, 0, 0.78);
-    --R: #E0362C;
-    --O: #F47B20;
-    --Y: #F6C21C;
-    --G: #22A04B;
-    --B: #2369D6;
-    --V: #7A3EA1;
-    --W: #F1F0EC;
-    --K: #2C2C2C;
+    --frame: #FBF8EC;
+    --flap: #F3EDDC;
+    --flap-hi: #FAF6EA;
+    --flap-lo: #EAE2CB;
+    --char: #4A2E24;
+    --seam: rgba(92, 62, 52, 0.22);
+    --tta-red: #DE370D;
+    --tta-red-dk: #C6310C;
+    --tta-brown: #5C3E34;
+    --tta-cream: #FBF8EC;
+    --tta-aqua: #00FFD4;
+    --tta-lime: #EBFF00;
+    --tta-sky: #76B8FF;
+    --R: #DE370D; /* TTA brick red */
+    --O: #F2793C; /* sunset orange */
+    --Y: #F2B91B; /* gold (stars) */
+    --G: #00C9A7; /* TTA aqua, deepened for cream flaps */
+    --B: #4F9BF5; /* TTA sky */
+    --V: #8D7CF0; /* lavender */
+    --L: #C9DB00; /* TTA lime */
+    --N: #5C3E34; /* TTA brown */
+    --S: #B9AE96; /* sand */
+    --sign: #DE370D;
+    --sign-ink: #FBF8EC;
+    --W: #5C3E34;
+    --K: #E2D9C2;
 
     --a-bg: #0D0E10;
     --a-card: #16181C;
@@ -33,12 +46,13 @@
     --a-line: #2A2E35;
     --a-ink: #ECEDEF;
     --a-muted: #9A9FA8;
-    --a-accent: #F6C21C;
-    --a-on-accent: #141005;
+    --a-accent: #DE370D;
+    --a-on-accent: #FBF8EC;
     --a-danger: #FF6B5E;
     --a-ok: #3CCB6E;
 
-    --flap-font: "Barlow Semi Condensed", "Arial Narrow", Arial, sans-serif;
+    --flap-font: "Poppins", "Barlow Semi Condensed", Arial, sans-serif;
+    --tta-serif: "Cormorant Garamond", Georgia, serif;
     --ui-font: "Barlow", "Segoe UI", Arial, sans-serif;
   }
   html, body { margin: 0; height: 100%; background: var(--bezel); color: var(--a-ink); font-family: var(--ui-font); }
@@ -47,13 +61,42 @@
   /* ---------- TV board ---------- */
   #tv {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    display: flex; align-items: center; justify-content: center;
-    background: var(--bezel); overflow: hidden; cursor: none;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    overflow: hidden; cursor: none;
+    background:
+      radial-gradient(ellipse 38% 22% at 18% 22%, rgba(255,255,255,0.95), rgba(255,255,255,0) 70%),
+      radial-gradient(ellipse 30% 16% at 72% 14%, rgba(255,255,255,0.85), rgba(255,255,255,0) 70%),
+      radial-gradient(ellipse 45% 24% at 85% 62%, rgba(255,255,255,0.9), rgba(255,255,255,0) 70%),
+      radial-gradient(ellipse 40% 22% at 10% 78%, rgba(255,255,255,0.9), rgba(255,255,255,0) 70%),
+      radial-gradient(ellipse 35% 18% at 50% 95%, rgba(255,255,255,0.8), rgba(255,255,255,0) 70%),
+      radial-gradient(ellipse 30% 14% at 45% 40%, rgba(255,255,255,0.55), rgba(255,255,255,0) 70%),
+      linear-gradient(180deg, #5FA3F7 0%, #8CC0FF 45%, #B9D7FF 100%);
   }
+
+  /* ---------- The Travel Agency signage ---------- */
+  .ap-bar { display: flex; align-items: center; box-sizing: border-box; flex: none; color: var(--tta-brown); font-family: "Poppins", var(--ui-font); }
+  #apHead { height: 12vh; gap: 2vh; padding-bottom: 1.2vh; }
+  #apFoot { height: 7vh; gap: 1.6vh; padding-top: 1.2vh; }
+  .ap-card { display: flex; align-items: center; gap: 1.6vh; height: 100%; box-sizing: border-box; background: var(--tta-cream); border-radius: 1.4vh; padding: 0 2.4vh; box-shadow: 0 8px 30px rgba(40, 70, 130, 0.25); }
+  .ap-logo { height: 6.4vh; width: auto; display: block; }
+  .ap-word { font-family: var(--tta-serif); color: var(--tta-red); font-weight: 700; font-size: 4.4vh; letter-spacing: 0.04em; line-height: 0.9; text-align: center; }
+  .ap-word small { display: block; font-size: 1.7vh; font-style: italic; font-weight: 600; letter-spacing: 0.02em; margin-top: 0.4vh; }
+  .ap-store { display: flex; flex-direction: column; justify-content: center; line-height: 1; border-left: 1px solid rgba(92,62,52,0.25); padding-left: 1.8vh; }
+  .ap-store b { font-family: var(--tta-serif); font-size: 4.6vh; font-weight: 700; color: var(--tta-brown); }
+  .ap-store span { display: block; height: 1vh; margin-top: 0.5vh; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 6'%3E%3Cpath d='M0 3 Q5 0 10 3 T20 3' fill='none' stroke='%235C3E34' stroke-width='1.4'/%3E%3C/svg%3E") repeat-x; background-size: 2vh 100%; }
+  .ap-sp { flex: 1; }
+  .ap-spark { color: #fff; font-size: 4vh; text-shadow: 0 0 12px rgba(255,255,255,0.9); }
+  .ap-clock { flex-direction: column; justify-content: center; align-items: flex-end; gap: 0; line-height: 1; }
+  .ap-clock b { font-family: var(--tta-serif); font-size: 5.4vh; font-weight: 700; color: var(--tta-red); font-variant-numeric: tabular-nums; }
+  .ap-clock span { font-size: 1.7vh; font-weight: 600; letter-spacing: 0.24em; color: var(--tta-brown); margin-top: 0.6vh; }
+  .ap-pill { flex: none; display: flex; align-items: center; gap: 1vh; height: 4.8vh; padding: 0 2.2vh; border-radius: 0.6vh; font-family: var(--tta-serif); font-weight: 700; font-size: 2.6vh; color: var(--tta-brown); background: var(--tta-cream); border: 0.25vh solid var(--tta-brown); white-space: nowrap; }
+  .ap-pill.aqua { background: var(--tta-aqua); border-color: var(--tta-red); }
+  .ap-pill svg { height: 55%; width: auto; fill: currentColor; }
+  .ap-msg { min-width: 0; flex: 0 1 auto; font-family: var(--tta-serif); font-style: italic; font-weight: 600; font-size: 3vh; color: var(--tta-brown); background: rgba(251,248,236,0.85); border-radius: 0.6vh; padding: 0.6vh 1.8vh; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #board {
     display: grid;
     background: var(--frame);
-    box-shadow: inset 0 0 0 1px #1C1C1C, 0 0 80px rgba(0, 0, 0, 0.9);
+    box-shadow: 0 0 0 1px rgba(92,62,52,0.12), 0 18px 60px rgba(40, 70, 130, 0.35);
   }
   .t {
     position: relative; overflow: hidden;
@@ -69,9 +112,9 @@
   }
   .t.f::before {
     content: ""; position: absolute; left: 0; right: 0; top: 0; height: 50%;
-    background: rgba(255, 255, 255, 0.07);
+    background: rgba(255, 255, 255, 0.35);
   }
-  .t.cR, .t.cO, .t.cY, .t.cG, .t.cB, .t.cV, .t.cW, .t.cK {
+  .t.cR, .t.cO, .t.cY, .t.cG, .t.cB, .t.cV, .t.cW, .t.cK, .t.cL, .t.cN, .t.cS {
     background-image: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 49%, rgba(0,0,0,0.16) 51%, rgba(0,0,0,0.04) 100%);
   }
   .t.cR { background-color: var(--R); }
@@ -82,6 +125,9 @@
   .t.cV { background-color: var(--V); }
   .t.cW { background-color: var(--W); }
   .t.cK { background-color: var(--K); }
+  .t.cL { background-color: var(--L); }
+  .t.cN { background-color: var(--N); }
+  .t.cS { background-color: var(--S); }
   #dot {
     position: fixed; right: 10px; bottom: 8px; width: 7px; height: 7px; border-radius: 50%;
     background: #3A3A3A;
@@ -174,13 +220,30 @@
   .a-crop { margin-top: 12px; padding: 12px; border: 1px solid var(--a-line); border-radius: 10px; display: grid; grid-gap: 10px; justify-items: start; }
   #cropCv { width: 280px; max-width: 100%; height: auto; border-radius: 8px; touch-action: none; cursor: grab; background: #000; }
   #cropZoom { width: 280px; max-width: 100%; }
+  .a-edit { display: grid; grid-template-columns: auto 1fr; grid-gap: 6px 12px; align-items: center; width: 100%; max-width: 420px; }
+  .a-edit .a-hint { margin: 0; }
   .a-thumb { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; flex: none; }
 </style>
 </head>
 <body>
 
 <div id="tv" hidden>
+  <div id="apHead" class="ap-bar">
+    <div class="ap-card">
+      <img class="ap-logo" src="https://www.thetravelagency.co/logos/TheTravelAgency_red.svg" alt="The Travel Agency" onerror="this.outerHTML='&lt;div class=&quot;ap-word&quot;&gt;THE TRAV&#398;L AG&#398;NCY&lt;small&gt;a cannabis store&lt;/small&gt;&lt;/div&gt;'">
+      <div class="ap-store"><b>Union Square</b><span></span></div>
+    </div>
+    <div class="ap-sp"></div>
+    <div class="ap-spark">&#10022;</div>
+    <div class="ap-card ap-clock"><b id="apTime">--:--</b><span id="apDate"></span></div>
+  </div>
   <div id="board" role="img" aria-label="USQ team board"></div>
+  <div id="apFoot" class="ap-bar">
+    <div class="ap-pill aqua"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" transform="rotate(45 12 12)"/></svg>Now boarding</div>
+    <div class="ap-msg">Thanks for traveling with us</div>
+    <div class="ap-sp"></div>
+    <div class="ap-pill">&#10022; Union Square</div>
+  </div>
   <div id="dot"></div>
 </div>
 
@@ -302,33 +365,39 @@
             <textarea id="shoutText" maxlength="160" required placeholder="Stayed late to help close and walked three first-timers through edibles."></textarea>
             <span class="a-count" id="shoutCount">0 / 160</span>
           </div>
-          <div class="a-row" style="grid-column:1/-1">
-            <label class="a-btn">Add photo (optional)<input type="file" accept="image/*" id="shoutPhotoIn" hidden></label>
-            <span id="shoutPhotoState" class="a-hint"></span>
+          <div class="a-field" style="grid-column:1/-1">
+            <label for="shoutPhoto">Photo (optional)</label>
+            <input id="shoutPhoto" type="file" accept="image/*">
           </div>
-          <div id="shoutCrop" style="grid-column:1/-1"></div>
-          <div class="a-row"><button class="a-btn primary" type="submit">Post shout-out</button></div>
+          <div class="a-row"><button class="a-btn primary" type="submit" id="shoutSubmit">Post shout-out</button></div>
         </form>
+        <div id="shoutCrop"></div>
         <div class="a-list" id="shoutList"></div>
       </section>
 
       <section class="a-card">
         <h2>Board message</h2>
-        <p class="a-hint">A free message that gets its own panel, like a team note or reminder. Leave it empty to skip the panel.</p>
+        <p class="a-hint">A free message that gets its own panel, like a team note or reminder. Add a photo if you like: it gets its own page right after the message. Leave the message empty to skip both.</p>
         <div class="a-field">
           <label for="msgText">Message</label>
           <textarea id="msgText" maxlength="200" placeholder="Inventory count Sunday 8 AM. Coffee is on me."></textarea>
           <span class="a-count" id="msgCount">0 / 200</span>
         </div>
+        <div class="a-field">
+          <label for="msgPhoto">Photo (optional)</label>
+          <input id="msgPhoto" type="file" accept="image/*">
+        </div>
+        <div class="a-item" id="msgPhotoNow" hidden>
+          <img class="a-thumb" id="msgThumb" alt="">
+          <div class="grow"><div class="sub">Shows on its own page right after the message.</div></div>
+          <button class="a-btn small" type="button" id="msgPhotoEdit">Crop / edit</button>
+          <button class="a-btn small" type="button" id="msgPhotoRemove">Remove photo</button>
+        </div>
+        <div id="msgCrop"></div>
         <div class="a-row">
           <button class="a-btn primary" type="button" id="msgSave">Save message</button>
           <button class="a-btn" type="button" id="msgClear">Clear</button>
         </div>
-        <div class="a-label">Photo (optional)</div>
-        <div class="a-row" id="msgPhotoRow">
-          <label class="a-btn">Add photo<input type="file" accept="image/*" id="msgPhotoIn" hidden></label>
-        </div>
-        <div id="msgCrop"></div>
       </section>
 
       <section class="a-card">
@@ -707,7 +776,7 @@
     ['usqfact', 'Union Square fact']
   ];
   function panelOn(name) {
-    var key = (name === 'trivQ' || name === 'trivA') ? 'trivia' : (name === 'celebPhoto' ? 'celebrate' : name);
+    var key = (name === 'trivQ' || name === 'trivA') ? 'trivia' : (name === 'celebPhoto' ? 'celebrate' : name === 'shoutPhoto' ? 'shout' : name === 'msgPhoto' ? 'message' : name);
     var p = S().panels || {};
     return p[key] !== false;
   }
@@ -718,6 +787,13 @@
     var raw = S().exclude;
     if (raw == null) raw = DEFAULT_EXCLUDE;
     return String(raw).split(',').map(function (t) { return t.trim().toLowerCase(); }).filter(Boolean);
+  }
+  // Board display: first name plus last initial ("James Lewis" -> "James L").
+  function shortName(name) {
+    var w = String(name || '').trim().split(/\s+/).filter(Boolean);
+    if (w.length > 2 && /^(usq|soho|dtbk)$/i.test(w[w.length - 1])) w.pop();
+    if (w.length < 2) return w.join(' ');
+    return w[0] + ' ' + w[w.length - 1].charAt(0).toUpperCase();
   }
   function isExcluded(name, terms) {
     var n = String(name).toLowerCase().trim();
@@ -828,9 +904,11 @@
     return r;
   }
   function chips(code, n) { var a = []; for (var i = 0; i < n; i++) a.push('{' + code + '}'); return a; }
+  // Brick red edge with a plane in the middle.
   function rainbow() {
-    var seq = 'ROYGBV', r = [];
-    for (var i = 0; i < COLS; i++) r.push('{' + seq.charAt(Math.floor(i * seq.length / COLS)) + '}');
+    var r = [], mid = Math.floor(COLS / 2);
+    for (var i = 0; i < COLS; i++) r.push('{R}');
+    r[mid - 1] = ' '; r[mid] = '✈'; r[mid + 1] = ' ';
     return r;
   }
   function edges(code) { var r = blank(); r[0] = '{' + code + '}'; r[COLS - 1] = '{' + code + '}'; return r; }
@@ -942,14 +1020,6 @@
     return framed(r);
   }
 
-  /* Board shows first name + last initial: "Shannon Williams" -> "Shannon W" */
-  function shortName(n) {
-    var w = String(n || '').replace(/\s+/g, ' ').trim().split(' ');
-    if (w.length < 2) return w[0] || '';
-    var last = w[w.length - 1].replace(/[^A-Za-z0-9\u00C0-\u024F]/g, '');
-    if (last.length === 1) return w.slice(0, -1).join(' ') + ' ' + last.toUpperCase(); // already "Juan Carlos R"
-    return w[0] + (last ? ' ' + last.charAt(0).toUpperCase() : '');
-  }
   function leaderPanel(title, sub, list, fmt, foot, minTxn) {
     var r = [center(title), center(sub), blank()];
     if (!list.length) {
@@ -1072,42 +1142,17 @@
     r = r.concat(middle(lines.map(center), 2, 8));
     while (r.length < 10) r.push(blank());
     r = r.slice(0, 10);
-    r.push(center('SHOUT-OUT TO ' + q.name));
+    r.push(center('SHOUT-OUT TO ' + shortName(q.name)));
     var stars = blank(); put(stars, Math.floor((COLS - 5) / 2), chips('Y', 5));
     r.push(stars);
     return framed(r);
   }
 
-  // Photo beside text: a photo block on the left (about square on the board) and the
-  // words in a column on the right. Used by shout-outs and the board message.
-  function photoSideRows(key, top, bw, bh) {
-    var r = [];
-    for (var i = 0; i < ROWS; i++) r.push(blank());
-    for (var y = 0; y < bh; y++) for (var x = 0; x < bw; x++) r[top + y][1 + x] = '\u0001' + key + '|' + x + '|' + y + '|' + bw + '|' + bh;
-    return r;
-  }
   function shoutPanel(cycle) {
-    var SO = DATA.shoutouts || {};
-    var list = Object.keys(SO).filter(function (k) { return SO[k] && SO[k].text; })
-      .sort(function (a, b) { return (SO[b].addedAt || 0) - (SO[a].addedAt || 0); }).slice(0, 12);
-    if (!list.length) return null;
-    var sk = list[cycle % list.length], s = SO[sk];
+    var s = pickRecent(DATA.shoutouts, cycle);
+    if (!s) return null;
     var head = center('SHOUT-OUT'); head[0] = '{V}'; head[COLS - 1] = '{V}';
-    if (s.photo) {
-      var BW = 10, BH = 8, r2 = photoSideRows('shout:' + sk, 2, BW, BH);
-      r2[0] = head;
-      var tc = BW + 2, tw = COLS - tc - 1;
-      var L = fitLines(wrap(s.to, tw), 2, tw);
-      L.push('');
-      var room = 10 - L.length - (s.from ? 2 : 0);
-      L = L.concat(fitLines(wrap(s.text, tw), Math.max(1, room), tw));
-      if (s.from) { L.push(''); L = L.concat(fitLines(wrap('- ' + s.from, tw), 1, tw)); }
-      var st = 1 + Math.max(0, Math.floor((10 - L.length) / 2));
-      L.forEach(function (t, i) { var c = txt(t, tw); put(r2[st + i], tc + Math.floor((tw - c.length) / 2), c); });
-      r2[ROWS - 1] = edges('V');
-      return framed(r2);
-    }
-    var r = [head, blank(), center(s.to), blank()];
+    var r = [head, blank(), center(shortName(s.to)), blank()];
     var lines = fitLines(wrap(s.text, COLS - 2), 5, COLS - 2);
     r = r.concat(middle(lines.map(center), 4, 9));
     while (r.length < 10) r.push(blank());
@@ -1118,28 +1163,44 @@
     return framed(r);
   }
 
+  // Photo page: the photo on the left in a chip frame, short text on the right.
+  function photoCaptionPanel(key, code, L) {
+    var FW = 15, r = [], x, y, i;
+    for (i = 0; i < ROWS; i++) r.push(blank());
+    for (x = 0; x < COLS; x++) { r[0][x] = '{' + code + '}'; r[ROWS - 1][x] = '{' + code + '}'; }
+    for (y = 1; y < ROWS - 1; y++) { r[y][0] = '{' + code + '}'; r[y][FW - 1] = '{' + code + '}'; r[y][COLS - 1] = '{' + code + '}'; }
+    var BW = FW - 2, BH = ROWS - 2;
+    for (y = 0; y < BH; y++) for (x = 0; x < BW; x++) r[y + 1][x + 1] = '\u0001' + key + '|' + x + '|' + y + '|' + BW + '|' + BH;
+    var tc = FW, tw = COLS - 1 - tc;
+    L = L.slice(0, ROWS - 2);
+    var start = 1 + Math.floor((ROWS - 2 - L.length) / 2);
+    L.forEach(function (s, n) { var c = txt(s, tw); put(r[start + n], tc + Math.floor((tw - c.length) / 2), c); });
+    return r;
+  }
+  // The same shout-out the text page just showed, if it has a photo.
+  function shoutPhotoPanel(cycle) {
+    var SO = DATA.shoutouts || {};
+    var ks = Object.keys(SO).filter(function (k) { return SO[k] && SO[k].text; })
+      .sort(function (a, b) { return (SO[b].addedAt || 0) - (SO[a].addedAt || 0); }).slice(0, 12);
+    if (!ks.length) return null;
+    var k = ks[cycle % ks.length], s = SO[k];
+    if (!s.photo) return null;
+    var tw = COLS - 16;
+    var L = ['SHOUT-OUT', 'TO', ''].concat(fitLines(wrap(shortName(s.to), tw), 2, tw));
+    if (s.from) L = L.concat(['', ''], fitLines(wrap('FROM ' + shortName(s.from), tw), 2, tw));
+    return photoCaptionPanel('shout:' + k, 'V', L);
+  }
+  function msgPhotoPanel() {
+    var m = String(S().message || '').trim();
+    if (!m || !S().messagePhoto) return null;
+    var tw = COLS - 16, lines = [];
+    m.split(/\n/).forEach(function (para) { if (para.trim()) lines = lines.concat(wrap(para, tw)); });
+    return photoCaptionPanel('msg', 'B', fitLines(lines, ROWS - 2, tw));
+  }
+
   function messagePanel() {
     var m = String(S().message || '').trim();
-    var mp = S().messagePhoto;
-    if (!m && !mp) return null;
-    if (mp && !m) {
-      var BW0 = 16, BH0 = ROWS - 2, r0 = [];
-      for (var i0 = 0; i0 < ROWS; i0++) r0.push(blank());
-      var x0 = Math.floor((COLS - BW0) / 2);
-      for (var y = 0; y < BH0; y++) for (var x = 0; x < BW0; x++) r0[1 + y][x0 + x] = '\u0001msg:|' + x + '|' + y + '|' + BW0 + '|' + BH0;
-      r0[0] = edges('B'); r0[ROWS - 1] = edges('B');
-      return framed(r0);
-    }
-    if (mp) {
-      var BW = 10, BH = 8, r2 = photoSideRows('msg:', 2, BW, BH);
-      var tc = BW + 2, tw = COLS - tc - 1, L = [];
-      m.split(/\n/).forEach(function (para) { L = L.concat(para.trim() ? wrap(para, tw) : ['']); });
-      L = fitLines(L, 10, tw);
-      var st = 1 + Math.max(0, Math.floor((10 - L.length) / 2));
-      L.forEach(function (t, i) { var c = txt(t, tw); put(r2[st + i], tc + Math.floor((tw - c.length) / 2), c); });
-      r2[0] = edges('B'); r2[ROWS - 1] = edges('B');
-      return framed(r2);
-    }
+    if (!m) return null;
     var lines = [];
     m.split(/\n/).forEach(function (para) { lines = lines.concat(para.trim() ? wrap(para, COLS - 2) : ['']); });
     lines = fitLines(lines, 10, COLS - 2);
@@ -1247,13 +1308,13 @@
   }
 
   function confetti(shift) {
-    var seq = 'RYBGOVYRGBOV', r = [];
+    var seq = 'RGBYRLGOB', r = [];
     for (var i = 0; i < COLS; i++) r.push('{' + seq.charAt((i + shift) % seq.length) + '}');
     return r;
   }
   // Photo card: the photo fills the left side, top to bottom (15 x 12 tiles), with the
   // words on the right. Party cards get confetti above and below the words.
-  function photoCard(key, lines, party, leafy) {
+  function photoCard(key, lines, party) {
     var BW = 15, BH = ROWS, r = [];
     for (var i = 0; i < ROWS; i++) r.push(blank());
     for (var y = 0; y < BH; y++) for (var x = 0; x < BW; x++) r[y][x] = '\u0001' + key + '|' + x + '|' + y + '|' + BW + '|' + BH;
@@ -1266,14 +1327,6 @@
       var top = confetti(0), bot = confetti(5);
       for (var c = tc; c < COLS; c++) { r[0][c] = top[c]; r[ROWS - 1][c] = bot[c]; }
     }
-    // Birthdays: a frame of cannabis leaves around the words (mixed with confetti on the day itself)
-    if (leafy) {
-      for (var c2 = BW; c2 < COLS; c2++) {
-        var lf = !party || (c2 % 2 === 0);
-        if (lf) { r[0][c2] = '🌿'; r[ROWS - 1][c2] = '🌿'; }
-      }
-      for (var y2 = 1; y2 < ROWS - 1; y2++) { r[y2][BW] = y2 % 2 ? '🌿' : ' '; r[y2][COLS - 1] = y2 % 2 ? ' ' : '🌿'; }
-    }
     return r;
   }
   function photoCelebrate(ev, cycle, upcoming) {
@@ -1284,16 +1337,16 @@
       e = today[cycle % today.length];
       if (!e.key || !P[e.key]) return null;
       return photoCard(e.key, e.kind === 'bday'
-        ? ['HAPPY', 'BIRTHDAY', '', e.name + '!']
-        : ['HAPPY', e.years + (e.years === 1 ? ' YEAR' : ' YEARS'), 'AT TTA', '', e.name + '!'], true, e.kind === 'bday');
+        ? ['HAPPY', 'BIRTHDAY', '', shortName(e.name) + '!']
+        : ['HAPPY', e.years + (e.years === 1 ? ' YEAR' : ' YEARS'), 'AT TTA', '', shortName(e.name) + '!'], true);
     }
     var up = ev.filter(function (x) { return x.key && P[x.key] && x.days > 0; });
     if (!upcoming || !up.length) return null;
     e = up[cycle % up.length];
     var when = e.days === 1 ? 'TOMORROW' : shortMD(e.date);
     return photoCard(e.key, e.kind === 'bday'
-      ? [e.days <= 21 ? 'COMING UP' : 'USQ TEAM', '', e.name, '', 'BIRTHDAY', when]
-      : [e.days <= 21 ? 'COMING UP' : 'USQ TEAM', '', e.name, '', e.years + (e.years === 1 ? ' YEAR' : ' YEARS'), 'AT TTA', when], false, e.kind === 'bday');
+      ? [e.days <= 21 ? 'COMING UP' : 'USQ TEAM', '', shortName(e.name), '', 'BIRTHDAY', when]
+      : [e.days <= 21 ? 'COMING UP' : 'USQ TEAM', '', shortName(e.name), '', e.years + (e.years === 1 ? ' YEAR' : ' YEARS'), 'AT TTA', when], false);
   }
   /* ---------- fun pages: records, Green Wednesday, pet of the month, weather ---------- */
   var WX = null;
@@ -1301,9 +1354,9 @@
   function photoSrc(key) {
     if (String(key).indexOf('pet:') === 0) { var pp = (DATA.pets || {})[key.slice(4)]; return pp && pp.photo; }
     if (String(key).indexOf('bday:') === 0) { var bc = (DATA.bdayCelebs || {})[key.slice(5)]; return bc && bc.photo; }
-    if (String(key).indexOf('spot:') === 0) { var sp = (DATA.spotlights || {})[key.slice(5)]; return sp && sp.photo; }
     if (String(key).indexOf('shout:') === 0) { var so = (DATA.shoutouts || {})[key.slice(6)]; return so && so.photo; }
-    if (String(key).indexOf('msg:') === 0) return S().messagePhoto;
+    if (key === 'msg') return S().messagePhoto;
+    if (String(key).indexOf('spot:') === 0) { var sp = (DATA.spotlights || {})[key.slice(5)]; return sp && sp.photo; }
     return (DATA.photos || {})[key];
   }
 
@@ -1431,7 +1484,7 @@
     for (y = 1; y < FH; y++) ring.push([y, FW - 1]);
     for (x = FW - 2; x >= 0; x--) ring.push([FH - 1, x]);
     for (y = FH - 2; y >= 1; y--) ring.push([y, 0]);
-    var seq = 'ROYGBV';
+    var seq = 'RRK';
     ring.forEach(function (rc, n) { r[rc[0]][rc[1]] = '{' + seq.charAt((Math.floor(n / 2) + cycle) % seq.length) + '}'; });
     r[0][0] = r[0][FW - 1] = r[FH - 1][0] = r[FH - 1][FW - 1] = '🐾';
     var BW = FW - 2, BH = FH - 2;
@@ -1508,7 +1561,7 @@
       var lines = [];
       today.slice(0, 3).forEach(function (e) {
         lines.push(center(e.kind === 'bday' ? 'HAPPY BIRTHDAY' : 'HAPPY ' + e.years + (e.years === 1 ? ' YEAR' : ' YEARS') + ' AT TTA'));
-        lines.push(center(e.name + '!'));
+        lines.push(center(shortName(e.name) + '!'));
         lines.push(blank());
       });
       lines.pop();
@@ -1519,21 +1572,13 @@
       return framed(r);
     }
     r = [center('COMING UP'), center('BIRTHDAYS + ANNIVERSARIES'), blank()];
-    // Full names: if a name doesn't fit beside "BIRTHDAY", use the short label (BDAY / YRS),
-    // and if it still doesn't fit, the rest of the name goes on the next row.
     ev.slice(0, 8).forEach(function (e) {
-      var nm = txt(e.name), row = blank();
       var label = txt(e.kind === 'bday' ? 'BIRTHDAY' : e.years + (e.years === 1 ? ' YEAR' : ' YEARS'));
-      if (nm.length > COLS - 1 - label.length - 1 - 8) label = txt(e.kind === 'bday' ? 'BDAY' : e.years + (e.years === 1 ? ' YR' : ' YRS'));
-      var room = COLS - 1 - label.length - 1 - 8;
+      var row = blank();
       put(row, 1, txt(e.days === 1 ? 'TMRW' : shortMD(e.date), 6));
       put(row, COLS - 1 - label.length, label);
-      if (nm.length <= room) { put(row, 8, nm); r.push(row); return; }
-      var parts = wrap(e.name, room);
-      put(row, 8, txt(parts[0], room));
+      put(row, 8, txt(shortName(e.name), COLS - 1 - label.length - 1 - 8));
       r.push(row);
-      var rest = parts.slice(1).join(' ');
-      if (rest) { var row2 = blank(); put(row2, 8, txt(rest, COLS - 1 - 8)); r.push(row2); }
     });
     return framed(r);
   }
@@ -1576,7 +1621,7 @@
     if (contentLoading) return;
     if (CONTENT && Date.now() - contentLoadedAt < 6 * 3600 * 1000) return;
     contentLoading = true;
-    firebase.database().ref('sohoBoardContent').once('value').then(function (snap) {
+    firebase.database().ref('usqBoardContent').once('value').then(function (snap) {
       CONTENT = snap.val() || {};
       contentLoadedAt = Date.now();
       contentLoading = false;
@@ -1686,7 +1731,7 @@
     return framed(r);
   }
 
-  var ORDER = ['bdayToday', 'welcome', 'weather', 'onthisday', 'home', 'records', 'mis', 'uptDay', 'trivQ', 'stars', 'countdown', 'bdayToday', 'usqfact', 'spotlight', 'atvDay', 'trivA', 'pet', 'quote', 'celebrate', 'celebPhoto', 'attrib', 'bdayToday', 'uptMonth', 'nycfact', 'shout', 'atvMonth', 'bdayToday', 'message'];
+  var ORDER = ['bdayToday', 'welcome', 'weather', 'onthisday', 'home', 'records', 'mis', 'uptDay', 'trivQ', 'stars', 'countdown', 'bdayToday', 'usqfact', 'spotlight', 'atvDay', 'trivA', 'pet', 'quote', 'celebrate', 'celebPhoto', 'attrib', 'bdayToday', 'uptMonth', 'nycfact', 'shout', 'shoutPhoto', 'atvMonth', 'bdayToday', 'message', 'msgPhoto'];
   function build(name, cycle) {
     if (!panelOn(name)) return null;
     switch (name) {
@@ -1701,6 +1746,8 @@
       case 'quote': return quotePanel(cycle);
       case 'shout': return shoutPanel(cycle);
       case 'message': return messagePanel();
+      case 'msgPhoto': return msgPhotoPanel();
+      case 'shoutPhoto': return shoutPhotoPanel(cycle);
       case 'mis': return misPanel(cycle);
       case 'spotlight': return spotlightPanel(cycle);
       case 'celebrate': return celebratePanel(cycle);
@@ -1726,7 +1773,7 @@
     tv.hidden = false;
     var STILL = /[?&]still\b/.test(location.search);
     var CYCLE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    var COLOR_CODES = 'ROYGBVW';
+    var COLOR_CODES = 'RGBYL';
     var tiles = [], cur = [], tgt = [], anim = [], running = false;
 
     for (var i = 0; i < ROWS * COLS; i++) {
@@ -1760,7 +1807,8 @@
       el._p = true;
     }
     function sizeBoard() {
-      var vw = window.innerWidth, vh = window.innerHeight;
+      var apH = document.getElementById('apHead'), apF = document.getElementById('apFoot');
+      var vw = window.innerWidth, vh = window.innerHeight - (apH ? apH.offsetHeight : 0) - (apF ? apF.offsetHeight : 0);
       var outer = Math.round(Math.min(vw, vh) * 0.03);
       var ratio = 0.76, gapR = 0.12;
       var wByW = (vw - outer * 4) / (COLS + (COLS - 1) * gapR);
@@ -1774,6 +1822,9 @@
       boardEl.style.gridGap = g + 'px';
       boardEl.style.padding = outer + 'px';
       boardEl.style.borderRadius = Math.round(outer * 0.5) + 'px';
+      var bw = COLS * w + (COLS - 1) * g + outer * 2;
+      if (apH) apH.style.width = bw + 'px';
+      if (apF) apF.style.width = bw + 'px';
       var fs = Math.round(h * 0.66);
       var radius = Math.max(1, Math.round(w * 0.07));
       var seam = Math.max(1, Math.round(h * 0.025));
@@ -1787,6 +1838,15 @@
       }
     }
     sizeBoard();
+    (function apClock() {
+      var t = document.getElementById('apTime'), d = document.getElementById('apDate');
+      function tick() {
+        var n = new Date(), h = n.getHours(), m = n.getMinutes();
+        if (t) t.textContent = ((h % 12) || 12) + ':' + (m < 10 ? '0' : '') + m + (h < 12 ? ' AM' : ' PM');
+        if (d) d.textContent = n.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase();
+      }
+      tick(); setInterval(tick, 10000);
+    })();
     window.addEventListener('resize', function () {
       sizeBoard();
       for (var q = 0; q < tiles.length; q++) if (cur[q].charAt(0) === '\u0001') setTile(q, cur[q], false);
@@ -2170,6 +2230,9 @@
     }
 
     function renderLists() {
+      var mp = S().messagePhoto;
+      $('msgPhotoNow').hidden = !mp;
+      if (mp && $('msgThumb').src !== mp) $('msgThumb').src = mp;
       var names = rosterNames();
       $('nameList').innerHTML = names.map(function (n) { return '<option value="' + esc(n) + '"></option>'; }).join('');
 
@@ -2196,20 +2259,13 @@
           '<button class="a-btn small danger" type="button" data-del="quotes/' + esc(q._k) + '">Delete</button></div>';
       }).join('') : '<p class="a-empty">No quotes yet.</p>';
 
-      // Board message photo
-      var mph = S().messagePhoto;
-      $('msgPhotoRow').innerHTML = (mph ? '<img class="a-thumb" alt="" src="' + esc(mph) + '">' : '') +
-        '<label class="a-btn">' + (mph ? 'Change photo' : 'Add photo') + '<input type="file" accept="image/*" id="msgPhotoIn" hidden></label>' +
-        (mph ? '<button class="a-btn" type="button" id="msgPhotoDel">Remove photo</button>' : '');
-
       // Shout-outs
       var ss = Object.keys(DATA.shoutouts || {}).map(function (k) { var s = DATA.shoutouts[k]; s._k = k; return s; })
         .sort(function (a, b) { return (b.addedAt || 0) - (a.addedAt || 0); });
       $('shoutList').innerHTML = ss.length ? ss.map(function (s, i) {
-        return '<div class="a-item"><div class="grow"><div class="name">To ' + esc(s.to) + (s.from ? ' · from ' + esc(s.from) : '') + (i < 12 ? '' : ' <span class="sub">(not shown)</span>') + '</div><div class="sub">' + esc(s.text) + '</div></div>' +
-          (s.photo ? '<img class="a-thumb" alt="" src="' + esc(s.photo) + '">' : '') +
+        return '<div class="a-item">' + (s.photo ? '<img class="a-thumb" alt="" src="' + esc(s.photo) + '">' : '') + '<div class="grow"><div class="name">To ' + esc(s.to) + (s.from ? ' · from ' + esc(s.from) : '') + (i < 12 ? '' : ' <span class="sub">(not shown)</span>') + '</div><div class="sub">' + esc(s.text) + '</div></div>' +
           '<label class="a-btn small">' + (s.photo ? 'Change photo' : 'Add photo') + '<input type="file" accept="image/*" data-shoutphoto="' + esc(s._k) + '" hidden></label>' +
-          (s.photo ? '<button class="a-btn small" type="button" data-shoutunphoto="' + esc(s._k) + '">Remove photo</button>' : '') +
+          (s.photo ? '<button class="a-btn small" type="button" data-shoutedit="' + esc(s._k) + '">Crop / edit</button><button class="a-btn small" type="button" data-shoutunphoto="' + esc(s._k) + '">Remove photo</button>' : '') +
           '<button class="a-btn small danger" type="button" data-del="shoutouts/' + esc(s._k) + '">Delete</button></div>';
       }).join('') : '<p class="a-empty">No shout-outs yet.</p>';
 
@@ -2382,65 +2438,70 @@
       }).catch(function (err) { toast(failText(err), true); });
     });
 
-    // Photos for shout-outs and the board message: a square-ish block of 10 x 8 tiles.
-    function sidePhotoOpts(who, boxId, save) {
-      return { who: who, boxId: boxId, grid: [10, 8], fit: true, startCover: true, save: save,
-        hint: 'Drag and zoom to frame the photo, then adjust it if you like. The lines show the board tiles.' };
-    }
-    var shoutPhoto = null;
-    $('shoutPhotoIn').addEventListener('change', function () {
-      var f = this.files && this.files[0];
-      this.value = '';
-      if (!f) return;
-      openCropper('shout', f, sidePhotoOpts('the shout-out', 'shoutCrop', function (data) {
-        shoutPhoto = data;
-        $('shoutPhotoState').innerHTML = '<img class="a-thumb" alt="" src="' + esc(data) + '" style="vertical-align:middle"> Photo ready. <button class="a-btn small" type="button" id="shoutPhotoDrop">Remove</button>';
-        $('shoutPhotoDrop').addEventListener('click', function () { shoutPhoto = null; $('shoutPhotoState').innerHTML = ''; });
-        return Promise.resolve();
-      }));
-    });
-    $('shoutList').addEventListener('change', function (ev) {
-      var inp = ev.target, k = inp.getAttribute && inp.getAttribute('data-shoutphoto');
-      if (!k || !inp.files || !inp.files[0]) return;
-      var f = inp.files[0];
-      inp.value = '';
-      openCropper('shout', f, sidePhotoOpts('the shout-out', 'shoutCrop', function (data) {
-        return rootRef.child('shoutouts/' + k + '/photo').set(data);
-      }));
-    });
-    $('shoutList').addEventListener('click', function (ev) {
-      var b = ev.target.closest && ev.target.closest('[data-shoutunphoto]');
-      if (!b) return;
-      rootRef.child('shoutouts/' + b.getAttribute('data-shoutunphoto') + '/photo').remove()
-        .then(function () { toast('Photo removed.'); }).catch(function (err) { toast(failText(err), true); });
-    });
-    $('msgPhotoRow').addEventListener('change', function (ev) {
-      var inp = ev.target;
-      if (inp.id !== 'msgPhotoIn' || !inp.files || !inp.files[0]) return;
-      var f = inp.files[0];
-      inp.value = '';
-      openCropper('msg', f, sidePhotoOpts('the message', 'msgCrop', function (data) {
-        return rootRef.child('settings/messagePhoto').set(data);
-      }));
-    });
-    $('msgPhotoRow').addEventListener('click', function (ev) {
-      var b = ev.target.closest && ev.target.closest('#msgPhotoDel');
-      if (!b) return;
-      rootRef.child('settings/messagePhoto').remove()
-        .then(function () { toast('Photo removed.'); }).catch(function (err) { toast(failText(err), true); });
-    });
-
     $('shoutForm').addEventListener('submit', function (ev) {
       ev.preventDefault();
       var to = $('shoutTo').value.trim(), from = $('shoutFrom').value.trim(), text = $('shoutText').value.trim();
       if (!to || !text) return;
+      var f = $('shoutPhoto').files && $('shoutPhoto').files[0];
       var rec = { to: to, from: from, text: text, addedAt: Date.now() };
-      if (shoutPhoto) rec.photo = shoutPhoto;
-      rootRef.child('shoutouts').push(rec).then(function () {
-        shoutPhoto = null; $('shoutPhotoState').innerHTML = '';
-        $('shoutText').value = ''; $('shoutTo').value = ''; $('shoutText').dispatchEvent(new Event('input'));
-        toast('Shout-out posted.');
-      }).catch(function (err) { toast(failText(err), true); });
+      function post(photo) {
+        if (photo) rec.photo = photo;
+        return rootRef.child('shoutouts').push(rec).then(function () {
+          $('shoutText').value = ''; $('shoutTo').value = ''; $('shoutPhoto').value = ''; $('shoutText').dispatchEvent(new Event('input'));
+          $('shoutSubmit').textContent = 'Post shout-out';
+          toast('Shout-out posted.');
+        });
+      }
+      if (f) openCropper('shout', f, { who: to, boxId: 'shoutCrop', grid: [13, 10], save: post });
+      else post().catch(function (err) { toast(failText(err), true); });
+    });
+    $('shoutPhoto').addEventListener('change', function () {
+      $('shoutSubmit').textContent = this.files && this.files[0] ? 'Next: crop the photo' : 'Post shout-out';
+    });
+    // Existing shout-outs: add, change, crop/edit or remove a photo.
+    function dataUrlBlob(u) {
+      var parts = String(u).split(','), bin = atob(parts[1] || ''), arr = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      return new Blob([arr], { type: (parts[0].match(/:(.*?);/) || [])[1] || 'image/jpeg' });
+    }
+    function shoutCropOpts(k) {
+      var so = (DATA.shoutouts || {})[k] || {};
+      return { who: so.to || 'them', boxId: 'shoutCrop', grid: [13, 10], save: function (data) { return rootRef.child('shoutouts/' + k + '/photo').set(data); } };
+    }
+    $('shoutList').addEventListener('change', function (ev) {
+      var inp = ev.target, k = inp.getAttribute && inp.getAttribute('data-shoutphoto');
+      if (!k || !inp.files || !inp.files[0]) return;
+      var file = inp.files[0]; inp.value = '';
+      openCropper('shout', file, shoutCropOpts(k));
+    });
+    $('shoutList').addEventListener('click', function (ev) {
+      var e1 = ev.target.closest && ev.target.closest('[data-shoutedit]');
+      if (e1) { var k1 = e1.getAttribute('data-shoutedit'), ph = ((DATA.shoutouts || {})[k1] || {}).photo; if (ph) openCropper('shout', dataUrlBlob(ph), shoutCropOpts(k1)); return; }
+      var b = ev.target.closest && ev.target.closest('[data-shoutunphoto]');
+      if (!b) return;
+      rootRef.child('shoutouts/' + b.getAttribute('data-shoutunphoto') + '/photo').remove()
+        .then(function () { toast('Photo removed.'); })
+        .catch(function (err) { toast(failText(err), true); });
+    });
+
+    // Board message photo: crop on pick, then edit or remove any time.
+    function msgCropOpts() {
+      return { who: 'the photo', boxId: 'msgCrop', grid: [13, 10], hint: 'Drag and zoom so the photo fills the square. The lines show the board tiles.',
+        save: function (data) { return rootRef.child('settings/messagePhoto').set(data); } };
+    }
+    $('msgPhoto').addEventListener('change', function () {
+      var f = this.files && this.files[0];
+      if (!f) return;
+      this.value = '';
+      openCropper('msg', f, msgCropOpts());
+    });
+    $('msgPhotoEdit').addEventListener('click', function () {
+      var ph = S().messagePhoto;
+      if (ph) openCropper('msg', dataUrlBlob(ph), msgCropOpts());
+    });
+    $('msgPhotoRemove').addEventListener('click', function () {
+      rootRef.child('settings/messagePhoto').remove().then(function () { toast('Photo removed.'); })
+        .catch(function (err) { toast(failText(err), true); });
     });
 
     $('msgSave').addEventListener('click', function () {
@@ -2660,16 +2721,29 @@
         var minZ = opts.fit ? Math.min(img.naturalWidth, img.naturalHeight) / Math.max(img.naturalWidth, img.naturalHeight) : 1;
         box.innerHTML = '<div class="a-crop"><p class="a-hint" style="margin:0">' + hint + '</p>' +
           '<canvas id="cropCv" width="560" height="560"></canvas>' +
-          '<label for="cropZoom" class="a-hint" style="margin:0">Zoom</label><input id="cropZoom" type="range" min="' + minZ + '" max="6" step="0.01" value="' + (opts.startCover ? 1 : minZ) + '">' +
-          '<div class="a-row"><button class="a-btn small" type="button" id="cropRot">Rotate</button><button class="a-btn small" type="button" id="cropReset">Reset edits</button></div>' +
-          '<label for="cropBri" class="a-hint" style="margin:0">Brightness</label><input id="cropBri" type="range" min="0.5" max="1.6" step="0.01" value="1.06" style="width:280px;max-width:100%">' +
-          '<label for="cropCon" class="a-hint" style="margin:0">Contrast</label><input id="cropCon" type="range" min="0.5" max="1.8" step="0.01" value="1.08" style="width:280px;max-width:100%">' +
-          '<label for="cropSat" class="a-hint" style="margin:0">Color</label><input id="cropSat" type="range" min="0" max="2" step="0.01" value="1.1" style="width:280px;max-width:100%">' +
+          '<label for="cropZoom" class="a-hint" style="margin:0">Zoom</label><input id="cropZoom" type="range" min="' + minZ + '" max="6" step="0.01" value="' + minZ + '">' +
+          '<div class="a-edit" id="cropEdit">' +
+          '<label class="a-hint" for="cropBr">Brightness</label><input id="cropBr" type="range" min="0.5" max="1.6" step="0.01" value="1.06">' +
+          '<label class="a-hint" for="cropCt">Contrast</label><input id="cropCt" type="range" min="0.5" max="1.6" step="0.01" value="1.08">' +
+          '<label class="a-hint" for="cropSa">Color</label><input id="cropSa" type="range" min="0" max="2" step="0.01" value="1.1">' +
+          '</div>' +
+          '<div class="a-row"><button class="a-btn small" type="button" id="cropRot">Rotate</button><button class="a-btn small" type="button" id="cropBw">Black and white</button><button class="a-btn small" type="button" id="cropReset">Reset edits</button></div>' +
           '<div class="a-row"><button class="a-btn primary" type="button" id="cropSave">Save photo</button><button class="a-btn" type="button" id="cropCancel">Cancel</button></div></div>';
         box.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        var cv = $('cropCv'), V = cv.width, W = img.naturalWidth, H = img.naturalHeight, src = img, rot = 0;
-        var bri = 1.06, con = 1.08, sat = 1.1;
-        var base = Math.max(V / W, V / H), zoom = opts.startCover ? 1 : minZ, cx = W / 2, cy = opts.fit ? H / 2 : H * 0.4, drag = null;
+        var cv = $('cropCv'), V = cv.width, W = img.naturalWidth, H = img.naturalHeight;
+        var src = img, rot = 0, fx = { br: 1.06, ct: 1.08, sa: 1.1, bw: false };
+        var canFilter = 'filter' in cv.getContext('2d');
+        if (!canFilter) $('cropEdit').hidden = true;
+        function fxString() { return 'brightness(' + fx.br + ') contrast(' + fx.ct + ') saturate(' + (fx.bw ? 0 : fx.sa) + ')'; }
+        function rotated() {
+          if (!rot) return img;
+          var c = document.createElement('canvas'), q = rot % 2 === 1;
+          c.width = q ? img.naturalHeight : img.naturalWidth; c.height = q ? img.naturalWidth : img.naturalHeight;
+          var g = c.getContext('2d'); g.translate(c.width / 2, c.height / 2); g.rotate(rot * Math.PI / 2);
+          g.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+          return c;
+        }
+        var base = Math.max(V / W, V / H), zoom = minZ, cx = W / 2, cy = opts.fit ? H / 2 : H * 0.4, drag = null;
         // Fit mode: fill the empty edges with the photo's own corner color (usually white).
         var bg = '#000';
         if (opts.fit) {
@@ -2687,7 +2761,7 @@
         function paint(c, size) {
           var g = c.getContext('2d'), sc = base * zoom * size / V;
           g.fillStyle = bg; g.fillRect(0, 0, size, size);
-          try { g.filter = 'brightness(' + bri + ') contrast(' + con + ') saturate(' + sat + ')'; } catch (e) { }
+          try { g.filter = fxString(); } catch (e) { }
           g.drawImage(src, size / 2 - cx * sc, size / 2 - cy * sc, W * sc, H * sc);
           try { g.filter = 'none'; } catch (e) { }
         }
@@ -2715,28 +2789,20 @@
           $('cropZoom').value = zoom; render();
         }, { passive: false });
         $('cropZoom').addEventListener('input', function () { zoom = +this.value; render(); });
-        function setSrc() {
-          if (rot === 0) { src = img; W = img.naturalWidth; H = img.naturalHeight; }
-          else {
-            var c = document.createElement('canvas'), iw = img.naturalWidth, ih = img.naturalHeight;
-            c.width = rot % 2 ? ih : iw; c.height = rot % 2 ? iw : ih;
-            var g = c.getContext('2d');
-            g.translate(c.width / 2, c.height / 2); g.rotate(rot * Math.PI / 2); g.drawImage(img, -iw / 2, -ih / 2);
-            src = c; W = c.width; H = c.height;
-          }
-          base = Math.max(V / W, V / H);
-          minZ = opts.fit ? Math.min(W, H) / Math.max(W, H) : 1;
-          zoom = opts.startCover ? 1 : minZ; cx = W / 2; cy = opts.fit ? H / 2 : H * 0.4;
-          $('cropZoom').min = minZ; $('cropZoom').value = zoom;
-        }
-        $('cropRot').addEventListener('click', function () { rot = (rot + 1) % 4; setSrc(); render(); });
-        $('cropBri').addEventListener('input', function () { bri = +this.value; render(); });
-        $('cropCon').addEventListener('input', function () { con = +this.value; render(); });
-        $('cropSat').addEventListener('input', function () { sat = +this.value; render(); });
+        [['cropBr', 'br'], ['cropCt', 'ct'], ['cropSa', 'sa']].forEach(function (p) {
+          $(p[0]).addEventListener('input', function () { fx[p[1]] = +this.value; render(); });
+        });
+        $('cropBw').addEventListener('click', function () { fx.bw = !fx.bw; this.textContent = fx.bw ? 'Color' : 'Black and white'; render(); });
         $('cropReset').addEventListener('click', function () {
-          bri = 1.06; con = 1.08; sat = 1.1; rot = 0;
-          $('cropBri').value = bri; $('cropCon').value = con; $('cropSat').value = sat;
-          setSrc(); render();
+          fx = { br: 1.06, ct: 1.08, sa: 1.1, bw: false };
+          $('cropBr').value = fx.br; $('cropCt').value = fx.ct; $('cropSa').value = fx.sa; $('cropBw').textContent = 'Black and white';
+          render();
+        });
+        $('cropRot').addEventListener('click', function () {
+          rot = (rot + 1) % 4; src = rotated();
+          W = src.width || src.naturalWidth; H = src.height || src.naturalHeight;
+          base = Math.max(V / W, V / H); cx = W / 2; cy = H / 2;
+          render();
         });
         function close() { box.innerHTML = ''; URL.revokeObjectURL(url); }
         $('cropCancel').addEventListener('click', close);
@@ -2836,8 +2902,7 @@
 
     $('msgClear').addEventListener('click', function () {
       $('msgText').value = ''; $('msgText').dispatchEvent(new Event('input'));
-      if (S().messagePhoto) rootRef.child('settings/messagePhoto').remove();
-      rootRef.child('settings/message').set('').then(function () { toast('Message cleared.'); })
+      Promise.all([rootRef.child('settings/message').set(''), rootRef.child('settings/messagePhoto').remove()]).then(function () { toast('Message and photo cleared.'); })
         .catch(function (err) { toast(failText(err), true); });
     });
 
