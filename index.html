@@ -1496,7 +1496,7 @@
     if (contentLoading) return;
     if (CONTENT && Date.now() - contentLoadedAt < 6 * 3600 * 1000) return;
     contentLoading = true;
-    firebase.database().ref('sohoBoardContent').once('value').then(function (snap) {
+    firebase.database().ref('usqBoardContent').once('value').then(function (snap) {
       CONTENT = snap.val() || {};
       contentLoadedAt = Date.now();
       contentLoading = false;
